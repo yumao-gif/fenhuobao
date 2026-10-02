@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>分货宝 - 农技专家</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;width:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:#F5F9F6;color:#1F2D28;-webkit-font-smoothing:antialiased}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;width:100%;max-width:480px;margin:0 auto;background:#F5F9F6;position:relative;overflow:hidden}
+
+/* Header */
+.chat-header{height:56px;background:#FFFFFF;display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;border-bottom:1px solid #E8F0EB}
+.back-btn{width:36px;height:36px;border-radius:50%;background:rgba(91,174,138,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.back-btn svg{width:20px;height:20px;stroke:#5BAE8A;stroke-width:2;fill:none}
+.header-info{flex:1}
+.header-title{font-size:18px;font-weight:600;color:#1F2D28}
+.header-sub{font-size:12px;color:#7A8C83}
+.header-avatar{width:40px;height:40px;border-radius:50%;background:#5BAE8A;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#FFFFFF;flex-shrink:0}
+
+/* Messages */
+.chat-messages{flex:1;overflow-y:auto;padding:16px;padding-bottom:140px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chat-messages::-webkit-scrollbar{display:none}
+.message{margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;max-width:85%;animation:fadeInUp .35s cubic-bezier(.2,.8,.2,1)}
+.message.ai{align-self:flex-start;margin-right:auto}
+.message.user{align-self:flex-end;margin-left:auto;flex-direction:row-reverse}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+.msg-avatar{width:36px;height:36px;border-radius:50%;background:#5BAE8A;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.msg-avatar.ai{background:#5BAE8A}
+.msg-avatar.user{background:#F5A623}
+.msg-bubble{background:#F5F9F6;border-radius:16px;padding:12px 14px;font-size:15px;line-height:1.6;color:#1F2D28;box-shadow:0 1px 4px rgba(91,174,138,0.08);word-break:break-word;max-width:100%}
+.message.user .msg-bubble{background:#5BAE8A;color:#fff}
+.msg-time{font-size:11px;color:#7A8C83;margin-top:4px;text-align:right}
+.message.ai .msg-time{text-align:left}
+
+/* Input */
+.chat-input-area{position:absolute;bottom:56px;left:0;right:0;background:#fff;border-top:1px solid #E8F0EB;padding:8px 12px;display:flex;align-items:center;gap:8px;z-index:100}
+.chat-input{flex:1;height:40px;border:1px solid #E8F0EB;border-radius:20px;padding:0 14px;font-size:15px;background:#F5F9F6;outline:none;-webkit-appearance:none}
+.chat-input:focus{border-color:#5BAE8A;background:#fff}
+.send-btn{width:40px;height:40px;border-radius:50%;background:#5BAE8A;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.send-btn svg{width:18px;height:18px;stroke:#fff;stroke-width:2;fill:none}
+.send-btn:disabled{background:#E8F0EB}
+
+/* Typing */
+.typing-indicator{display:flex;gap:4px;padding:8px 12px}
+.typing-indicator span{width:8px;height:8px;background:#A8D5BA;border-radius:50%;animation:typingBounce 1.4s infinite ease-in-out}
+.typing-indicator span:nth-child(1){animation-delay:0s}
+.typing-indicator span:nth-child(2){animation-delay:0.2s}
+.typing-indicator span:nth-child(3){animation-delay:0.4s}
+@keyframes typingBounce{0%,80%,100%{transform:scale(0.6);opacity:0.5}40%{transform:scale(1);opacity:1}}
+
+/* ===== Tab Bar ===== */
+#tab-bar{height:56px;background:#fff;border-top:1px solid #E8F0EB;display:flex;align-items:center;justify-content:space-around;flex-shrink:0;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:998}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:4px 0;text-decoration:none;position:relative;-webkit-tap-highlight-color:transparent}
+.tab-icon-wrap{width:24px;height:24px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.tab-item.active .tab-icon-wrap{background:rgba(91,174,138,0.12);border-radius:50%;width:32px;height:32px}
+.tab-icon{width:24px;height:24px;stroke:#7A8C83;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;transition:all .2s}
+.tab-item.active .tab-icon{width:20px;height:20px;stroke:#5BAE8A}
+.tab-label{font-size:11px;color:#7A8C83;transition:color .2s;font-weight:500}
+.tab-item.active .tab-label{color:#5BAE8A;font-weight:600}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="chat-header">
+    <div class="back-btn" onclick="history.back()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div class="header-info">
+      <div class="header-title">农技专家</div>
+      <div class="header-sub">有不懂的尽管问</div>
+    </div>
+    <div class="header-avatar">专</div>
+  </div>
+
+  <div class="chat-messages" id="chat-messages">
+    <div class="message ai">
+      <div class="msg-avatar ai">专</div>
+      <div>
+        <div class="msg-bubble">你好！我是农技专家，有什么种植、防虫、保鲜的问题，都可以问我。</div>
+        <div class="msg-time">刚刚</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-input-area">
+    <input type="text" class="chat-input" id="chat-input" placeholder="输入问题，如：西瓜裂果怎么办？" />
+    <button class="send-btn" id="send-btn">
+      <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+    </button>
+  </div>
+
+  <div id="tab-bar">
+    <a class="tab-item" href="index.html">
+      <div class="tab-icon-wrap">
+        <svg class="tab-icon" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="11" y2="11"/><line x1="14" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="11" y2="15"/><line x1="14" y1="15" x2="16" y2="15"/></svg>
+      </div>
+      <div class="tab-label">算账</div>
+    </a>
+    <a class="tab-item" href="market.html">
+      <div class="tab-icon-wrap">
+        <svg class="tab-icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div class="tab-label">行情</div>
+    </a>
+    <a class="tab-item active" href="service.html">
+      <div class="tab-icon-wrap">
+        <svg class="tab-icon" viewBox="0 0 24 24"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/></svg>
+      </div>
+      <div class="tab-label">服务</div>
+    </a>
+    <a class="tab-item" href="profile.html">
+      <div class="tab-icon-wrap">
+        <svg class="tab-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div class="tab-label">我的</div>
+    </a>
+  </div>
+</div>
+
+<script>
+(function(){
+  var messagesEl = document.getElementById('chat-messages');
+  var inputEl = document.getElementById('chat-input');
+  var sendBtn = document.getElementById('send-btn');
+
+  // 所有回答均来自智谱GLM API，无本地假数据
+
+  function getTimeStr(){
+    var now = new Date();
+    return now.getHours() + ':' + (now.getMinutes()<10?'0':'') + now.getMinutes();
+  }
+
+  function addMessage(text, isUser){
+    var div = document.createElement('div');
+    div.className = 'message ' + (isUser ? 'user' : 'ai');
+    div.innerHTML = '<div class="msg-avatar ' + (isUser?'user':'ai') + '">' + (isUser?'我':'专') + '</div>' +
+      '<div><div class="msg-bubble">' + escapeHtml(text) + '</div><div class="msg-time">' + getTimeStr() + '</div></div>';
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function showTyping(){
+    var div = document.createElement('div');
+    div.className = 'message ai';
+    div.id = 'typing-msg';
+    div.innerHTML = '<div class="msg-avatar ai">专</div>' +
+      '<div class="msg-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>';
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function removeTyping(){
+    var el = document.getElementById('typing-msg');
+    if(el) el.remove();
+  }
+
+  function escapeHtml(text){
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // API 请求失败时显示统一兜底回答
+  function getFallbackAnswer(){
+    return {answer: '这个问题比较复杂，建议咨询当地农技站', source: 'error'};
+  }
+
+  // 调用 GLM API
+  function callGLM(question){
+    return new Promise(function(resolve, reject){
+      var body = JSON.stringify({
+        model: 'glm-4-flash',
+        messages: [
+          {
+            role: 'system',
+            content: '你是一位经验丰富的农业技术专家，请用通俗易懂的大白话，针对农户提出的种植、防虫、保鲜等问题，给出具体可操作的建议。不要推荐农户去问别人，直接给出解决方案。回答控制在200字以内。'
+          },
+          {role: 'user', content: question}
+        ]
+      });
+
+      fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer 783a365271d1403bb40321c4da7f6b5c.XOUYb5bP3J22NMPr'
+        },
+        body: body
+      })
+      .then(function(res){
+        if(!res.ok){
+          throw new Error('HTTP ' + res.status);
+        }
+        return res.json();
+      })
+      .then(function(data){
+        if(data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content){
+          resolve({answer: data.choices[0].message.content, source: 'glm'});
+        } else {
+          throw new Error('invalid response');
+        }
+      })
+      .catch(function(err){
+        reject(err);
+      });
+    });
+  }
+
+  function sendMessage(){
+    var text = inputEl.value.trim();
+    if(!text) return;
+
+    addMessage(text, true);
+    inputEl.value = '';
+    inputEl.disabled = true;
+    sendBtn.disabled = true;
+
+    showTyping();
+
+    // 直接请求智谱GLM API
+    callGLM(text)
+      .then(function(res){
+        removeTyping();
+        addMessage(res.answer, false);
+        inputEl.disabled = false;
+        sendBtn.disabled = false;
+        inputEl.focus();
+      })
+      .catch(function(err){
+        removeTyping();
+        var fallback = getFallbackAnswer();
+        addMessage(fallback.answer, false);
+        inputEl.disabled = false;
+        sendBtn.disabled = false;
+        inputEl.focus();
+      });
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  inputEl.addEventListener('keypress', function(e){
+    if(e.key === 'Enter') sendMessage();
+  });
+})();
+</script>
+</body>
+</html>

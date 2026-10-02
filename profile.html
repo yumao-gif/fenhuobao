@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>&#20998;&#36135;&#23453; - &#25105;&#30340;</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;width:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:#F5F9F6;color:#1F2D28;-webkit-font-smoothing:antialiased}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;width:100%;max-width:480px;margin:0 auto;background:#F5F9F6;position:relative;overflow:hidden}
+.page-content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;padding-bottom:72px;scrollbar-width:none}
+.page-content::-webkit-scrollbar{display:none}
+
+/* Tab Bar */
+#tab-bar{height:56px;background:#fff;border-top:1px solid #E8F0EB;display:flex;align-items:center;justify-content:space-around;flex-shrink:0;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:998}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:4px 0;text-decoration:none;position:relative}
+.tab-icon-wrap{width:24px;height:24px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.tab-item.active .tab-icon-wrap{background:rgba(91,174,138,0.12);border-radius:50%;width:32px;height:32px}
+.tab-icon{width:24px;height:24px;stroke:#7A8C83;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;transition:all .2s}
+.tab-item.active .tab-icon{width:20px;height:20px;stroke:#5BAE8A}
+.tab-label{font-size:11px;color:#7A8C83;transition:color .2s;font-weight:500}
+.tab-item.active .tab-label{color:#5BAE8A;font-weight:600}
+
+/* 个人中心 */
+.profile-header{background:#FFFFFF;border-radius:16px;padding:24px 20px;display:flex;align-items:center;gap:16px;margin-bottom:16px;box-shadow:0 2px 12px rgba(91,174,138,0.08);border:1px solid #E8F0EB}
+.profile-avatar{width:56px;height:56px;border-radius:50%;background:#5BAE8A;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#FFFFFF;flex-shrink:0}
+.profile-info{flex:1}
+.profile-name{font-size:18px;font-weight:700;color:#1F2D28;margin-bottom:4px}
+.profile-sub{font-size:13px;color:#7A8C83}
+
+.section-title{font-size:14px;font-weight:600;color:#7A8C83;padding:0 4px 10px}
+
+/* 田块卡片 */
+.field-card{background:#FFFFFF;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(91,174,138,0.08);display:flex;align-items:center;gap:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s}
+.field-card:active{transform:scale(0.98)}
+.field-icon{width:44px;height:44px;border-radius:12px;background:#F5F9F6;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.field-icon svg{width:22px;height:22px;stroke:#5BAE8A;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.field-info{flex:1;min-width:0}
+.field-name{font-size:15px;font-weight:600;color:#1F2D28;margin-bottom:2px}
+.field-meta{font-size:13px;color:#7A8C83}
+.field-arrow{color:#7A8C83;font-size:14px;flex-shrink:0}
+
+/* 统计 */
+.stats-row{display:flex;gap:12px;margin-bottom:16px}
+.stat-box{flex:1;background:#FFFFFF;border-radius:16px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(91,174,138,0.08)}
+.stat-label{font-size:12px;color:#7A8C83;margin-bottom:4px}
+.stat-value{font-size:22px;font-weight:700;color:#5BAE8A}
+.stat-value.gold{color:#F5A623}
+.stat-unit{font-size:12px;color:#7A8C83}
+
+/* 最近算的账 */
+.history-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.history-card{background:#FFFFFF;border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(91,174,138,0.08);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s}
+.history-card:active{transform:scale(0.98)}
+.history-icon{width:40px;height:40px;border-radius:50%;background:rgba(91,174,138,0.08);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#5BAE8A;flex-shrink:0}
+.history-info{flex:1;min-width:0}
+.history-crop{font-size:15px;font-weight:600;color:#1F2D28;margin-bottom:2px}
+.history-meta{font-size:12px;color:#7A8C83}
+.history-amount{font-size:16px;font-weight:700;color:#5BAE8A;flex-shrink:0}
+
+/* 菜单 */
+.menu-list{background:#FFFFFF;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(91,174,138,0.08);margin-bottom:16px}
+.menu-item{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;border-bottom:1px solid #E8F0EB;text-decoration:none;color:inherit}
+.menu-item:last-child{border-bottom:none}
+.menu-item:active{background:#F5F9F6}
+.menu-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.menu-icon svg{width:20px;height:20px;stroke:#5BAE8A;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.menu-label{flex:1;font-size:15px;color:#1F2D28;font-weight:500}
+.menu-arrow{color:#7A8C83;font-size:14px}
+
+/* 田块管理弹层 */
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:1000;display:none;align-items:flex-end;justify-content:center}
+.overlay.show{display:flex}
+.sheet-panel{background:#fff;width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:20px 20px 32px;max-height:85vh;overflow-y:auto}
+.sheet-handle{width:36px;height:4px;border-radius:2px;background:#E8F0EB;margin:0 auto 16px}
+.sheet-title{font-size:17px;font-weight:700;color:#1F2D28;margin-bottom:16px}
+.field-item{display:flex;align-items:center;gap:12px;padding:14px;background:#F5F9F6;border-radius:12px;margin-bottom:10px;cursor:pointer}
+.field-item.selected{border:1.5px solid #5BAE8A;background:#F5F9F6}
+.field-item-name{flex:1;font-size:15px;font-weight:600;color:#1F2D28}
+.field-item-name small{display:block;font-size:12px;color:#7A8C83;font-weight:400;margin-top:2px}
+.field-check{width:22px;height:22px;border-radius:50%;border:2px solid #E8F0EB;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.field-item.selected .field-check{border-color:#5BAE8A;background:#5BAE8A}
+.field-check svg{width:12px;height:12px;stroke:#fff;stroke-width:3;fill:none;display:none}
+.field-item.selected .field-check svg{display:block}
+.add-field-btn{display:block;width:100%;height:44px;border:none;border-radius:24px;background:#5BAE8A;color:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer;text-align:center}
+.add-field-form{display:none;margin-top:16px}
+.add-field-form.show{display:block}
+.form-group{margin-bottom:12px}
+.form-label{font-size:13px;color:#7A8C83;margin-bottom:6px;display:block}
+.form-input{width:100%;padding:11px 12px;border:1px solid #E8F0EB;border-radius:8px;font-size:15px;outline:none;background:#fff}
+.form-input:focus{border-color:#5BAE8A}
+.form-row{display:flex;gap:10px}
+.form-row .form-group{flex:1}
+.form-actions{display:flex;gap:10px;margin-top:16px}
+.btn-cancel{flex:1;height:44px;border:1px solid #5BAE8A;border-radius:24px;background:#FFFFFF;color:#5BAE8A;font-size:15px;font-weight:600;cursor:pointer}
+.btn-save{flex:1;height:44px;border:none;border-radius:24px;background:#5BAE8A;color:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer}
+
+/* 空状态 */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;text-align:center}
+.empty-icon-circle{width:64px;height:64px;border-radius:50%;background:rgba(91,174,138,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.empty-icon-circle svg{width:32px;height:32px;stroke:#5BAE8A;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.empty-text{font-size:14px;color:#7A8C83;margin-bottom:14px;line-height:1.6}
+.empty-btn{background:#5BAE8A;color:#FFFFFF;border:none;border-radius:24px;padding:11px 28px;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block}
+
+.footer-note{font-size:12px;color:#7A8C83;text-align:center;padding:16px 20px;line-height:1.6}
+
+/* City selector (same as index.html) */
+.city-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:flex-end;flex-direction:column}
+.city-modal.active{display:flex}
+.city-sheet{background:#fff;border-radius:16px 16px 0 0;padding:16px;max-height:70vh;overflow-y:auto}
+.city-sheet-title{font-size:18px;font-weight:700;color:#1F2D28;margin-bottom:16px}
+.city-search{background:#F5F9F6;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.city-search input{flex:1;border:none;outline:none;font-size:15px;background:transparent}
+.city-list{display:flex;flex-direction:column;gap:2px}
+.city-item{padding:12px 8px;border-radius:8px;font-size:15px;color:#1F2D28;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+.city-item:active{background:#F5F9F6}
+.city-item .check{width:20px;height:20px;border-radius:50%;border:2px solid #E8F0EB;display:none;align-items:center;justify-content:center}
+.city-item .check.active{display:flex;background:#5BAE8A;border-color:#5BAE8A}
+.city-item .check.active svg{width:12px;height:12px;stroke:#fff;stroke-width:2}
+
+/* Price settings modal */
+.price-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:flex-end;flex-direction:column}
+.price-modal.active{display:flex}
+.price-sheet{background:#fff;border-radius:16px 16px 0 0;padding:16px;max-height:80vh;overflow-y:auto}
+.price-sheet-title{font-size:18px;font-weight:700;color:#1F2D28;margin-bottom:16px}
+.price-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px;background:#F5F9F6;border-radius:12px}
+.price-row-label{flex:0 0 80px;font-size:14px;font-weight:600;color:#7A8C83}
+.price-row-input{flex:1;padding:10px 12px;border:1px solid #E8F0EB;border-radius:8px;font-size:15px;outline:none;background:#fff}
+.price-row-input:focus{border-color:#5BAE8A}
+.price-row-unit{font-size:13px;color:#7A8C83}
+.price-save-btn{display:block;width:100%;height:44px;border:none;border-radius:24px;background:#5BAE8A;color:#FFFFFF;font-size:16px;font-weight:600;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="page-content" id="page-content">
+    <div class="profile-header">
+      <div class="profile-avatar">农</div>
+      <div class="profile-info">
+        <div class="profile-name">种地老乡</div>
+        <div class="profile-sub">分货宝·帮你算清楚怎么卖最划算</div>
+      </div>
+    </div>
+
+    <!-- 我的田块 -->
+    <div class="section-title">我的田块</div>
+    <div class="field-card" onclick="openFieldPanel()">
+      <div class="field-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <div class="field-info" id="field-card-info">
+        <div class="field-name">还没有田块</div>
+        <div class="field-meta">点这里加一块地，算账更快</div>
+      </div>
+      <div class="field-arrow">&gt;</div>
+    </div>
+
+    <!-- 数据统计 -->
+    <div class="section-title">数据统计</div>
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-label">累计算账</div>
+        <div class="stat-value" id="stat-count">0</div>
+        <div class="stat-unit">次</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">累计多赚</div>
+        <div class="stat-value gold" id="stat-extra">0</div>
+        <div class="stat-unit">万</div>
+      </div>
+    </div>
+
+    <div class="section-title">最近算的账</div>
+    <div class="history-list" id="history-list"></div>
+
+    <div class="section-title">功能菜单</div>
+    <!-- 默认城市 -->
+    <div class="section-title">默认城市</div>
+    <div class="menu-list" style="margin-bottom:16px">
+      <div class="menu-item" onclick="openCityModal()">
+        <div class="menu-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <div class="menu-label">当前城市：<span id="profile-city">开封市</span></div>
+        <div class="menu-arrow">›</div>
+      </div>
+    </div>
+
+    <!-- 我的报价 -->
+    <div class="section-title">我的报价</div>
+    <div class="menu-list" style="margin-bottom:16px">
+      <div class="menu-item" onclick="openPriceModal()">
+        <div class="menu-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <div class="menu-label">地头价 / 市场价 / 零售价</div>
+        <div class="menu-arrow">›</div>
+      </div>
+    </div>
+
+    <!-- 渠道价格系数设置 -->
+    <div class="section-title">渠道价格系数设置</div>
+    <div class="menu-list" style="margin-bottom:16px;padding:0;background:transparent;box-shadow:none">
+      <div style="background:#fff;border-radius:12px;padding:16px 20px;box-shadow:0 1px 4px rgba(91,174,138,0.08)">
+        <div style="font-size:14px;font-weight:600;color:#1F2D28;margin-bottom:4px">渠道价格系数</div>
+        <div style="font-size:12px;color:#7A8C83;margin-bottom:12px">改完保存，首页参考价按新系数算</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:13px;color:#7A8C83">市场系数</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="number" id="coef-market" step="0.05" min="0.5" max="3" value="1.40" style="width:80px;height:34px;border:1px solid #E8F0EB;border-radius:6px;padding:0 10px;font-size:14px;text-align:center;outline:none"/>
+              <span style="font-size:12px;color:#7A8C83">倍</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:13px;color:#7A8C83">零售系数</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="number" id="coef-retail" step="0.05" min="0.5" max="3" value="1.80" style="width:80px;height:34px;border:1px solid #E8F0EB;border-radius:6px;padding:0 10px;font-size:14px;text-align:center;outline:none"/>
+              <span style="font-size:12px;color:#7A8C83">倍</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:13px;color:#7A8C83">合作社系数</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="number" id="coef-coop" step="0.05" min="0.5" max="3" value="1.10" style="width:80px;height:34px;border:1px solid #E8F0EB;border-radius:6px;padding:0 10px;font-size:14px;text-align:center;outline:none"/>
+              <span style="font-size:12px;color:#7A8C83">倍</span>
+            </div>
+          </div>
+        </div>
+        <button onclick="saveCoefs()" style="width:100%;margin-top:12px;padding:10px 0;border:none;border-radius:8px;background:#5BAE8A;color:#fff;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(91,174,138,0.08)">保存系数</button>
+        <div style="font-size:12px;color:#7A8C83;margin-top:8px">系数参考行业均值，可根据当地行情调整。</div>
+      </div>
+    </div>
+
+    <div class="menu-list">
+      <a class="menu-item" href="price_alert.html">
+        <div class="menu-icon"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+        <div class="menu-label">价格提醒设置</div>
+        <div class="menu-arrow">›</div>
+      </a>
+      <div class="menu-item" onclick="alert('功能开发中：设置价格达到目标时自动通知')">
+        <div class="menu-icon"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <div class="menu-label">消息通知</div>
+        <div class="menu-arrow">›</div>
+      </div>
+      <div class="menu-item" onclick="clearAllData()">
+        <div class="menu-icon"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
+        <div class="menu-label">清空全部记录</div>
+        <div class="menu-arrow" style="color:#E53935">›</div>
+      </div>
+    </div>
+        <div class="menu-label">我的决策单</div>
+        <div class="menu-arrow">&gt;</div>
+      </a>
+      <div class="menu-item" onclick="clearAllData()">
+        <div class="menu-icon">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+        <div class="menu-label">清空全部记录</div>
+        <div class="menu-arrow">&gt;</div>
+      </div>
+      <div class="menu-item" onclick="alert('设置功能开发中')">
+        <div class="menu-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </div>
+        <div class="menu-label">设置</div>
+        <div class="menu-arrow">&gt;</div>
+      </div>
+    </div>
+
+    <div class="footer-note">本工具基于农户提供的输入信息和公开历史数据做粗略测算，不采集实时田间数据，不替代农技专家判断。</div>
+  </div>
+
+  <!-- 田块管理弹层 -->
+  <div class="overlay" id="field-overlay" onclick="if(event.target===this)closeFieldPanel()">
+    <div class="sheet-panel">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">我的田块</div>
+      <div id="field-list"></div>
+      <button class="add-field-btn" id="add-field-btn" onclick="showAddForm()">+ 再加一块地</button>
+      <div class="add-field-form" id="add-field-form">
+        <div class="form-group">
+          <label class="form-label">地块名字（比如：东头地、南坡地）</label>
+          <input class="form-input" id="f-name" placeholder="比如：东头地"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">种的什么</label>
+          <select class="form-input" id="f-crop">
+            <option value="watermelon">西瓜</option>
+            <option value="apple">苹果</option>
+            <option value="garlic">大蒜</option>
+            <option value="leafy">叶菜</option>
+            <option value="citrus">柑橘</option>
+            <option value="corn">玉米</option>
+            <option value="other">其他</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">多少亩</label>
+            <input class="form-input" id="f-area" type="number" inputmode="decimal" placeholder="比如 10"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">一亩收多少斤</label>
+            <input class="form-input" id="f-yield" type="number" inputmode="decimal" placeholder="比如 5000"/>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-cancel" onclick="closeAddForm()">取消</button>
+          <button class="btn-save" onclick="saveField()">保存田块</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-bar">
+    <a class="tab-item" href="index.html" id="tab-index">
+      <div class="tab-icon-wrap">
+        <svg class="tab-icon" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="11" y2="11"/><line x1="14" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="11" y2="15"/><line x1="14" y1="15" x2="16" y2="15"/></svg>
+      </div>
+      <div class="tab-label">算账</div>
+    </a>
+    <a class="tab-item" href="market.html" id="tab-market">
+      <div class="tab-icon-wrap">
+        <svg class="tab-icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div class="tab-label">行情</div>
+    </a>
+    <a class="tab-item" href="service.html" id="tab-service">
+      <div class="tab-icon-wrap">
+        <svg class="tab-icon" viewBox="0 0 24 24"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/></svg>
+      </div>
+      <div class="tab-label">服务</div>
+    </a>
+    <a class="tab-item active" href="profile.html" id="tab-profile">
+      <div class="tab-icon-wrap">
+        <svg class="tab-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div class="tab-label">我的</div>
+    </a>
+  </div>
+</div>
+
+<script>
+var CROP_LABELS={watermelon:'西瓜',apple:'苹果',garlic:'大蒜',leafy:'叶菜',citrus:'柑橘',cabbage:'白菜',corn:'玉米',other:'其他'};
+var FIELDS_KEY='fenhuobao_fields';
+var CURRENT_KEY='fenhuobao_current_field';
+
+function getFields(){
+  var raw=localStorage.getItem(FIELDS_KEY);
+  if(raw){try{return JSON.parse(raw)}catch(e){}}
+  return [];
+}
+function saveFields(fields){localStorage.setItem(FIELDS_KEY,JSON.stringify(fields));}
+function getCurrentField(){
+  var fields=getFields();
+  var cid=localStorage.getItem(CURRENT_KEY);
+  for(var i=0;i<fields.length;i++){if(fields[i].id===cid) return fields[i];}
+  return fields[0]||null;
+}
+
+function calcFarmerIncome(data){
+  var area=parseFloat(data.area)||0;
+  var yieldPerMu=parseFloat(data.yieldPerMu)||0;
+  var price=parseFloat(data.price)||0;
+  return area*yieldPerMu*0.5*price;
+}
+
+function formatDate(ts){
+  var d=new Date(ts);
+  var M=String(d.getMonth()+1).padStart(2,'0');
+  var D=String(d.getDate()).padStart(2,'0');
+  var h=String(d.getHours()).padStart(2,'0');
+  var m=String(d.getMinutes()).padStart(2,'0');
+  return M+'月'+D+'日 '+h+':'+m;
+}
+
+function renderCurrentField(){
+  var info=document.getElementById('field-card-info');
+  var f=getCurrentField();
+  if(!f){
+    info.innerHTML='<div class="field-name">还没有田块</div><div class="field-meta">点这里加一块地，算账更快</div>';
+    return;
+  }
+  var label=CROP_LABELS[f.crop]||f.crop||'未知';
+  info.innerHTML='<div class="field-name">'+f.name+'（'+label+'）</div><div class="field-meta">'+f.area+'亩 · 点了这快地就能直接算账</div>';
+}
+
+function renderFieldList(){
+  var wrap=document.getElementById('field-list');
+  var fields=getFields();
+  var cur=getCurrentField();
+  if(fields.length===0){
+    wrap.innerHTML='<div class="empty-state"><div class="empty-icon-circle"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><div class="empty-text">还没有田块<br/>先加一块地，以后直接点就能算账</div></div>';
+    return;
+  }
+  var html='';
+  for(var i=0;i<fields.length;i++){
+    var f=fields[i];
+    var label=CROP_LABELS[f.crop]||f.crop||'未知';
+    var selected=(cur&&cur.id===f.id);
+    html+='<div class="field-item '+(selected?'selected':'')+'" onclick="switchField(\''+f.id+'\')">'+
+      '<div class="field-item-name">'+f.name+'<small>'+label+' · '+f.area+'亩 · '+(f.price||'—')+'元/斤</small></div>'+
+      '<div class="field-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>'+
+    '</div>';
+  }
+  wrap.innerHTML=html;
+}
+
+function openFieldPanel(){
+  renderFieldList();
+  document.getElementById('field-overlay').classList.add('show');
+}
+function closeFieldPanel(){document.getElementById('field-overlay').classList.remove('show');closeAddForm();}
+function showAddForm(){document.getElementById('add-field-form').classList.add('show');}
+function closeAddForm(){document.getElementById('add-field-form').classList.remove('show');}
+
+function switchField(id){
+  var fields=getFields();
+  var f=null;
+  for(var i=0;i<fields.length;i++){if(fields[i].id===id) f=fields[i];}
+  if(!f) return;
+  localStorage.setItem(CURRENT_KEY,f.id);
+  // 同步到算账看板
+  var d={crop:f.crop,cropLabel:CROP_LABELS[f.crop]||f.crop,area:f.area,yieldPerMu:f.yieldPerMu||5000,price:f.price||0.4,timestamp:Date.now(),hasCar:f.hasCar||false,hasColdStorage:f.hasColdStorage||false,workers:f.workers||1,location:f.location||'',market:'',days:1};
+  d.income=calcFarmerIncome(d);
+  localStorage.setItem('userData',JSON.stringify(d));
+  localStorage.setItem('fenhuobao_data',JSON.stringify(d));
+  closeFieldPanel();
+  window.location.href='index.html';
+}
+
+function saveField(){
+  var name=document.getElementById('f-name').value.trim();
+  var crop=document.getElementById('f-crop').value;
+  var area=parseFloat(document.getElementById('f-area').value);
+  var yieldPerMu=parseFloat(document.getElementById('f-yield').value);
+  var price=parseFloat(document.getElementById('f-price')?document.getElementById('f-price').value:0)||0.4;
+  if(!name){alert('给这块地起个名字吧，比如“东头地”');return;}
+  if(!area||area<=0){alert('填一下多少亩');return;}
+  var fields=getFields();
+  var f={id:'f'+Date.now(),name:name,crop:crop,area:area,yieldPerMu:yieldPerMu||5000,price:price,timestamp:Date.now()};
+  fields.push(f);
+  saveFields(fields);
+  localStorage.setItem(CURRENT_KEY,f.id);
+  // 同步到算账看板
+  var d={crop:crop,cropLabel:CROP_LABELS[crop]||crop,area:area,yieldPerMu:yieldPerMu||5000,price:price,timestamp:Date.now()};
+  d.income=calcFarmerIncome(d);
+  localStorage.setItem('userData',JSON.stringify(d));
+  localStorage.setItem('fenhuobao_data',JSON.stringify(d));
+  closeFieldPanel();
+  window.location.href='index.html';
+}
+
+function renderHistory(){
+  var list=document.getElementById('history-list');
+  var records=[];
+  var raw=localStorage.getItem('fenhuobao_history');
+  if(raw){try{records=JSON.parse(raw)}catch(e){records=[]}}
+  var cur=localStorage.getItem('userData')||localStorage.getItem('fenhuobao_data');
+  if(records.length===0&&cur){
+    try{
+      var cd=JSON.parse(cur);
+      if(cd.crop&&cd.area&&cd.price){
+        records=[{crop:cd.crop,cropLabel:cd.cropLabel||CROP_LABELS[cd.crop]||cd.crop,area:cd.area,yieldPerMu:cd.yieldPerMu||5000,price:cd.price,timestamp:cd.timestamp||Date.now(),income:calcFarmerIncome(cd)}];
+      }
+    }catch(e){}
+  }
+  if(records.length===0){
+    list.innerHTML='<div class="empty-state">'+
+      '<div class="empty-icon-circle"><svg viewBox="0 0 24 24"><path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-4"/><rect x="9" y="2" width="6" height="9"/></svg></div>'+
+      '<div class="empty-text">还没算过账<br/>去算一笔看看怎么卖最划算</div>'+
+      '<a href="index.html" class="empty-btn">去算账</a>'+
+    '</div>';
+    return;
+  }
+  records.sort(function(a,b){return (b.timestamp||0)-(a.timestamp||0)});
+  var html='';
+  for(var i=0;i<records.length&&i<5;i++){
+    var r=records[i];
+    var cropLabel=r.cropLabel||CROP_LABELS[r.crop]||r.crop||'未知';
+    if(r.variety) cropLabel=cropLabel+'（'+r.variety+'）';
+    var income=r.income||calcFarmerIncome(r);
+    var dateStr=r.timestamp?formatDate(r.timestamp):'';
+    html+='<div class="history-card" onclick="location.href=\'decision_list.html\'">'+
+      '<div class="history-icon">'+cropLabel.charAt(0)+'</div>'+
+      '<div class="history-info">'+
+        '<div class="history-crop">'+cropLabel+' | '+r.area+'亩</div>'+
+        '<div class="history-meta">'+dateStr+'</div>'+
+      '</div>'+
+      '<div class="history-amount">'+(income/10000).toFixed(1)+'万</div>'+
+    '</div>';
+  }
+  list.innerHTML=html;
+}
+
+function forEachRecord(fn){
+  var records=[];
+  var raw=localStorage.getItem('fenhuobao_history');
+  if(raw){try{records=JSON.parse(raw)}catch(e){records=[]}}
+  var cur=localStorage.getItem('userData')||localStorage.getItem('fenhuobao_data');
+  if(cur){
+    try{
+      var cd=JSON.parse(cur);
+      var exist=false;
+      for(var i=0;i<records.length;i++){if(records[i].timestamp===cd.timestamp) exist=true;}
+      if(!exist&&cd.crop&&cd.area){
+        records.push({crop:cd.crop,cropLabel:cd.cropLabel||CROP_LABELS[cd.crop]||cd.crop,area:cd.area,yieldPerMu:cd.yieldPerMu||5000,price:cd.price,timestamp:cd.timestamp||Date.now(),income:cd.income||calcFarmerIncome(cd),extra:(cd.income||0)-calcFarmerIncome(cd)});
+      }
+    }catch(e){}
+  }
+  for(var j=0;j<records.length;j++){fn(records[j]);}
+}
+
+function updateStats(){
+  var statCount=document.getElementById('stat-count');
+  var statExtra=document.getElementById('stat-extra');
+  var count=0,totalExtra=0;
+  forEachRecord(function(r){
+    count++;
+    var allDealer=calcFarmerIncome(r);
+    var inc=r.income||allDealer;
+    var extra=(r.extra!==undefined&&r.extra!==null)?r.extra:(inc-allDealer);
+    totalExtra+=extra;
+  });
+  statCount.textContent=count;
+  var vE=totalExtra/10000;
+  statExtra.textContent=vE>=0.1?vE.toFixed(1):vE.toFixed(2);
+}
+
+function clearAllData(){
+  if(confirm('确定要清空全部记录吗？这没法撤回。')){
+    localStorage.removeItem('fenhuobao_data');
+    localStorage.removeItem('fenhuobao_history');
+    localStorage.removeItem('fenhuobao_memory');
+    localStorage.removeItem('userData');
+    renderHistory();
+    updateStats();
+    renderCurrentField();
+  }
+}
+
+renderCurrentField();
+renderHistory();
+updateStats();
+
+// ===== 城市选择器 =====
+var CITIES = ['开封市','北京市','上海市','广州市','成都市','武汉市','郑州市','济南市'];
+var currentCity = localStorage.getItem('fenhuobao_city') || '开封市';
+
+document.getElementById('profile-city').textContent = currentCity;
+
+function openCityModal(){
+  var modal = document.getElementById('city-modal');
+  var list = document.getElementById('city-list');
+  var search = document.getElementById('city-search-input');
+  search.value = '';
+  renderCityList(CITIES);
+  modal.classList.add('active');
+  search.focus();
+}
+
+function closeCityModal(){
+  document.getElementById('city-modal').classList.remove('active');
+}
+
+function renderCityList(cities){
+  var list = document.getElementById('city-list');
+  var html = '';
+  for(var i=0;i<cities.length;i++){
+    var c = cities[i];
+    var isSelected = c === currentCity;
+    html += '<div class="city-item" onclick="selectProfileCity(\'' + c + '\')">';
+    html += '<span>' + c + '</span>';
+    html += '<span class="check ' + (isSelected ? 'active' : '') + '">';
+    if(isSelected) html += '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+    html += '</span></div>';
+  }
+  list.innerHTML = html;
+}
+
+function filterCities(){
+  var q = document.getElementById('city-search-input').value.trim();
+  if(!q){ renderCityList(CITIES); return; }
+  var filtered = [];
+  for(var i=0;i<CITIES.length;i++){
+    if(CITIES[i].indexOf(q) >= 0) filtered.push(CITIES[i]);
+  }
+  renderCityList(filtered);
+}
+
+function selectProfileCity(city){
+  currentCity = city;
+  localStorage.setItem('fenhuobao_city', city);
+  document.getElementById('profile-city').textContent = city;
+  closeCityModal();
+}
+
+// ===== 渠道价格系数 =====
+var COEF_KEY = 'fenhuobao_channel_coefs';
+
+function loadCoefInputs(){
+  var d = {market:1.40, retail:1.80, coop:1.10};
+  try{
+    var s = JSON.parse(localStorage.getItem(COEF_KEY) || '{}');
+    if(s.market) d.market = parseFloat(s.market);
+    if(s.retail) d.retail = parseFloat(s.retail);
+    if(s.coop) d.coop = parseFloat(s.coop);
+  }catch(e){}
+  var m = document.getElementById('coef-market');
+  var r = document.getElementById('coef-retail');
+  var c = document.getElementById('coef-coop');
+  if(m) m.value = d.market.toFixed(2);
+  if(r) r.value = d.retail.toFixed(2);
+  if(c) c.value = d.coop.toFixed(2);
+}
+
+function saveCoefs(){
+  var m = parseFloat(document.getElementById('coef-market').value);
+  var r = parseFloat(document.getElementById('coef-retail').value);
+  var c = parseFloat(document.getElementById('coef-coop').value);
+  if(!m || m <= 0 || !r || r <= 0 || !c || c <= 0){
+    alert('系数要填大于 0 的数字');
+    return;
+  }
+  localStorage.setItem(COEF_KEY, JSON.stringify({market:m, retail:r, coop:c}));
+  alert('系数已保存，回首页就能看到新的参考价');
+}
+
+loadCoefInputs();
+
+// ===== 报价设置 =====
+var myPrices = JSON.parse(localStorage.getItem('fenhuobao_prices') || '{}');
+
+function openPriceModal(){
+  document.getElementById('price-field').value = myPrices.field || '';
+  document.getElementById('price-market').value = myPrices.market || '';
+  document.getElementById('price-retail').value = myPrices.retail || '';
+  document.getElementById('price-modal').classList.add('active');
+}
+
+function closePriceModal(){
+  document.getElementById('price-modal').classList.remove('active');
+}
+
+function savePrices(){
+  myPrices = {
+    field: document.getElementById('price-field').value.trim(),
+    market: document.getElementById('price-market').value.trim(),
+    retail: document.getElementById('price-retail').value.trim()
+  };
+  localStorage.setItem('fenhuobao_prices', JSON.stringify(myPrices));
+  closePriceModal();
+  alert('报价已保存');
+}
+</script>
+
+<!-- 城市选择器弹窗 -->
+<div class="city-modal" id="city-modal" onclick="if(event.target===this)closeCityModal()">
+  <div class="city-sheet">
+    <div class="city-sheet-title">选择城市</div>
+    <div class="city-search">
+      <svg viewBox="0 0 24 24" width="16" height="16" stroke="#7A8C83" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="city-search-input" placeholder="搜索城市..." oninput="filterCities()"/>
+    </div>
+    <div class="city-list" id="city-list"></div>
+  </div>
+</div>
+
+<!-- 报价设置弹窗 -->
+<div class="price-modal" id="price-modal" onclick="if(event.target===this)closePriceModal()">
+  <div class="price-sheet">
+    <div class="price-sheet-title">我的报价（元/斤）</div>
+    <div class="price-row">
+      <span class="price-row-label">地头价</span>
+      <input type="number" class="price-row-input" id="price-field" placeholder="贩子来收的价格" step="0.01"/>
+      <span class="price-row-unit">元/斤</span>
+    </div>
+    <div class="price-row">
+      <span class="price-row-label">市场价</span>
+      <input type="number" class="price-row-input" id="price-market" placeholder="拉到市场卖的价格" step="0.01"/>
+      <span class="price-row-unit">元/斤</span>
+    </div>
+    <div class="price-row">
+      <span class="price-row-label">零售价</span>
+      <input type="number" class="price-row-input" id="price-retail" placeholder="自己零售的价格" step="0.01"/>
+      <span class="price-row-unit">元/斤</span>
+    </div>
+    <button class="price-save-btn" onclick="savePrices()">保存</button>
+  </div>
+</div>
+
+</body>
+</html>

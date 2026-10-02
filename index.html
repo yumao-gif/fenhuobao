@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>分货宝 - 算账</title>
+  <style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;width:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:#F5F9F6;color:#1F2D28;-webkit-font-smoothing:antialiased}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;width:100%;max-width:480px;margin:0 auto;background:#F5F9F6;position:relative;overflow:hidden}
+.page-content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;padding-bottom:72px;scrollbar-width:none;position:relative}
+.page-content::-webkit-scrollbar{display:none}
+
+/* ===== Tab Bar ===== */
+#tab-bar{height:56px;background:#fff;border-top:1px solid #E8F0EB;display:flex;align-items:center;justify-content:space-around;flex-shrink:0;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:998}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:4px 0;text-decoration:none;position:relative}
+.tab-icon-wrap{width:24px;height:24px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.tab-item.active .tab-icon-wrap{background:rgba(91,174,138,0.12);border-radius:50%;width:32px;height:32px}
+.tab-icon{width:24px;height:24px;stroke:#7A8C83;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;transition:all .2s}
+.tab-item.active .tab-icon{width:20px;height:20px;stroke:#5BAE8A}
+.tab-label{font-size:11px;color:#7A8C83;transition:color .2s;font-weight:500}
+.tab-item.active .tab-label{color:#5BAE8A;font-weight:600}
+
+/* ===== State Toggle ===== */
+.state-container{display:none}
+.state-container.active{display:flex;flex-direction:column;flex:1;height:100%}
+
+/* ===== Chat Flow ===== */
+.chat-container{display:flex;flex-direction:column;position:relative;flex:1;overflow:hidden}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;padding-bottom:140px;scrollbar-width:none;-webkit-overflow-scrolling:touch;position:relative;min-height:0}
+.chat-messages::-webkit-scrollbar{display:none}
+.message{margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;max-width:85%;animation:fadeInUp .35s cubic-bezier(.2,.8,.2,1)}
+.message.ai{align-self:flex-start;margin-right:auto}
+.message.user{align-self:flex-end;margin-left:auto;flex-direction:row-reverse}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+.msg-avatar{width:36px;height:36px;border-radius:50%;background:#5BAE8A;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.msg-bubble{background:#F5F9F6;border-radius:16px;padding:12px 14px;font-size:15px;line-height:1.6;color:#1F2D28;box-shadow:0 1px 4px rgba(91,174,138,0.08);word-break:break-word}
+.message.user .msg-bubble{background:#5BAE8A;color:#fff}
+.quick-replies{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding-left:46px}
+.quick-btn{background:#FFFFFF;border:1px solid #E8F0EB;border-radius:20px;padding:8px 16px;font-size:14px;color:#1F2D28;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.quick-btn:active{background:#5BAE8A;color:#fff;border-color:#5BAE8A}
+.quick-btn.manual{background:#fff;border-style:dashed;border-color:#F5A623;color:#F5A623}
+.quick-btn.manual:active{background:#F5A623;color:#fff}
+
+.chat-input-area{position:absolute;bottom:56px;left:0;right:0;background:#fff;border-top:1px solid #E8F0EB;padding:8px 12px;display:flex;align-items:center;gap:8px;z-index:100}
+.chat-input{flex:1;height:40px;border:1px solid #E8F0EB;border-radius:20px;padding:0 14px;font-size:15px;background:#F5F9F6;outline:none;-webkit-appearance:none}
+.chat-input:focus{border-color:#5BAE8A;background:#fff}
+.send-btn{width:40px;height:40px;border-radius:50%;background:#5BAE8A;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.send-btn svg{width:18px;height:18px;stroke:#fff;stroke-width:2;fill:none}
+.send-btn:disabled{background:#E8F0EB}
+
+/* ===== Dashboard: Header ===== */
+.page-header{display:flex;align-items:center;justify-content:space-between;padding:4px 0 16px}
+.page-header-title{font-size:18px;font-weight:700;color:#1F2D28}
+.page-header-city{font-size:13px;color:#5BAE8A;display:flex;align-items:center;gap:4px;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:4px 8px;border-radius:8px;background:#FFFFFF}
+.page-header-city:active{background:#E8F0EB}
+
+/* ===== Dashboard: Product Visual Card ===== */
+.visual-card{position:relative;height:240px;border-radius:16px;overflow:hidden;margin-bottom:16px;box-shadow:0 2px 12px rgba(91,174,138,0.08)}
+.visual-bg{position:absolute;inset:0;background-size:cover;background-position:center}
+.visual-overlay{position:absolute;inset:0;background:linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(91,174,138,0.4) 100%)}
+.visual-info{position:absolute;bottom:0;left:0;right:0;padding:20px}
+.visual-label{background:#FFFFFF;border-radius:12px;padding:16px;display:inline-block;box-shadow:0 2px 12px rgba(91,174,138,0.08)}
+.visual-crop{font-size:20px;font-weight:700;color:#5BAE8A;margin-bottom:4px}
+.visual-meta{font-size:14px;color:#7A8C83}
+
+/* ===== Dashboard: Price Adjuster ===== */
+.price-card{background:#FFFFFF;border-radius:16px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;box-shadow:0 2px 12px rgba(91,174,138,0.08)}
+.price-label{font-size:14px;color:#5BAE8A;font-weight:500;white-space:nowrap}
+.price-adjuster{display:flex;align-items:center;gap:10px;flex:1;justify-content:flex-end}
+.price-btn{width:40px;height:40px;border-radius:50%;border:none;background:#fff;color:#5BAE8A;font-size:22px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(91,174,138,0.08);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.price-btn:active{transform:scale(0.95)}
+.price-display{font-size:32px;font-weight:800;color:#5BAE8A;min-width:90px;text-align:center}
+.price-unit{font-size:14px;color:#5BAE8A;margin-left:2px}
+
+/* ===== Dashboard: AI Advice + Distribution ===== */
+.advice-card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 12px rgba(91,174,138,0.08);margin-bottom:16px}
+.advice-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.advice-avatar{width:44px;height:44px;border-radius:50%;background:#5BAE8A;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0}
+.advice-text{font-size:15px;line-height:1.6;color:#1F2D28;flex:1}
+
+/* Stacked Bar */
+.stacked-bar{height:32px;border-radius:8px;overflow:hidden;display:flex;margin-bottom:16px;box-shadow:0 1px 4px rgba(91,174,138,0.08)}
+.bar-seg{height:100%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#FFFFFF;text-shadow:0 1px 2px rgba(0,0,0,0.15);white-space:nowrap;overflow:hidden}
+.bar-seg.a{background:#5BAE8A}
+.bar-seg.b{background:#F5A623}
+.bar-seg.c{background:#A8D5BA}
+
+.distribution-text{display:flex;justify-content:space-between;font-size:13px;color:#7A8C83;margin-bottom:4px}
+.distribution-text span{display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot.a{background:#5BAE8A}
+.dot.b{background:#F5A623}
+.dot.c{background:#A8D5BA}
+
+/* ===== Dashboard: Income Big Card ===== */
+.income-card{background:#FFFFFF;border-radius:16px;padding:24px 20px;text-align:center;box-shadow:0 2px 12px rgba(91,174,138,0.08);margin-bottom:16px}
+.income-label{font-size:15px;color:#7A8C83;margin-bottom:8px}
+.income-value{font-size:48px;font-weight:800;color:#F5A623;line-height:1.2}
+.income-unit{font-size:20px;color:#F5A623;font-weight:600}
+.income-compare{font-size:14px;color:#7A8C83;margin-top:8px}
+
+/* ===== Dashboard: Alternative Plans ===== */
+.alt-plans{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.alt-card{background:#FFFFFF;border-radius:16px;padding:14px;box-shadow:0 1px 6px rgba(91,174,138,0.08);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .2s;border:2px solid transparent}
+.alt-card:active{transform:scale(0.98)}
+.alt-card.active{border-color:#5BAE8A;background:#F5F9F6}
+.alt-title{font-size:13px;font-weight:600;color:#1F2D28;margin-bottom:6px}
+.alt-desc{font-size:12px;color:#7A8C83;line-height:1.5}
+.alt-income{font-size:16px;font-weight:700;color:#5BAE8A;margin-top:8px}
+
+/* ===== Dashboard: Channel Cards ===== */
+.channel-panel{background:#fff;border-radius:16px;padding:16px 16px 8px;box-shadow:0 2px 12px rgba(91,174,138,0.08);margin-bottom:16px}
+.channel-header{font-size:15px;font-weight:600;color:#1F2D28;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.channel-header svg{width:18px;height:18px;stroke:#5BAE8A;stroke-width:2;fill:none}
+.channel-card{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #E8F0EB;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.channel-card:last-child{border-bottom:none}
+.channel-card.disabled{opacity:0.45}
+.channel-check{width:22px;height:22px;border:2px solid #E8F0EB;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.channel-card.active .channel-check{border-color:#5BAE8A;background:#5BAE8A}
+.channel-check svg{width:14px;height:14px;stroke:#fff;stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round;display:none}
+.channel-card.active .channel-check svg{display:block}
+.channel-info{flex:1;min-width:0}
+.channel-name{font-size:14px;font-weight:600;color:#1F2D28;margin-bottom:2px}
+.channel-meta{font-size:12px;color:#7A8C83}
+.channel-income{font-size:15px;font-weight:700;color:#5BAE8A;flex-shrink:0}
+.channel-tip{font-size:12px;color:#7A8C83;padding:10px 0 4px;border-top:1px dashed #E8F0EB;margin-top:4px}
+
+/* ===== Dashboard: Service Grid ===== */
+.service-grid{display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;margin-bottom:16px}
+.service-item{background:#FFFFFF;border-radius:16px;padding:14px 8px;text-align:center;box-shadow:0 1px 6px rgba(91,174,138,0.08);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .2s;text-decoration:none;color:inherit}
+.service-item:active{transform:scale(0.95);background:#F5F9F6}
+.service-icon{width:36px;height:36px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center}
+.service-icon svg{width:28px;height:28px;stroke:#5BAE8A;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.service-name{font-size:12px;color:#1F2D28;font-weight:500}
+
+
+
+/* ===== Decision Sheet ===== */
+.decision-state{background:#F5F9F6;min-height:100%}
+.decision-header{display:flex;align-items:center;gap:12px;padding:16px 20px;background:#FFFFFF;border-bottom:1px solid #E8F0EB}
+.decision-back{width:36px;height:36px;border-radius:50%;background:rgba(91,174,138,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0}
+.decision-back svg{width:20px;height:20px;stroke:#5BAE8A;stroke-width:2;fill:none}
+.decision-title{flex:1;font-size:18px;font-weight:600;color:#1F2D28}
+.decision-share{width:36px;height:36px;border-radius:50%;background:rgba(91,174,138,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0}
+.decision-share svg{width:18px;height:18px;stroke:#5BAE8A;stroke-width:2;fill:none}
+.decision-sheet{background:#fff;border-radius:16px;padding:24px 20px;margin:16px;box-shadow:0 2px 16px rgba(91,174,138,0.08)}
+.sheet-section{margin-bottom:20px}
+.sheet-section:last-child{margin-bottom:0}
+.sheet-label{font-size:12px;color:#7A8C83;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px}
+.sheet-value{font-size:18px;font-weight:600;color:#1F2D28}
+.sheet-value.highlight{color:#5BAE8A;font-size:24px;font-weight:700}
+.sheet-value.gold{color:#F5A623;font-size:28px;font-weight:800}
+.sheet-divider{height:1px;background:#E8F0EB;margin:16px 0}
+.sheet-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #F5F9F6}
+.sheet-row:last-child{border-bottom:none}
+.sheet-row-label{font-size:14px;color:#7A8C83}
+.sheet-row-value{font-size:14px;font-weight:600;color:#1F2D28}
+.sheet-footer{font-size:12px;color:#7A8C83;text-align:center;padding:16px 20px;line-height:1.6}
+.sheet-bar{height:24px;border-radius:6px;overflow:hidden;display:flex;margin-top:8px}
+.sheet-bar-seg{height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff}
+.sheet-legend{display:flex;gap:16px;margin-top:8px;font-size:12px;color:#7A8C83}
+.sheet-legend span{display:flex;align-items:center;gap:4px}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ===== STATE A: Chat Flow (New User) ===== -->
+<div id="chat-state" class="state-container chat-container">
+  <div class="chat-messages" id="chat-messages">
+  </div>
+  <div class="chat-input-area">
+    <input type="text" class="chat-input" id="chat-input" placeholder="输入消息..." />
+    <button class="send-btn" id="send-btn">
+      <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ===== STATE C: Decision Sheet ===== -->
+<div id="decision-state" class="state-container decision-state">
+  <div class="decision-header">
+    <div class="decision-back" onclick="showDashboardFromDecision()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+    <div class="decision-title">决策参考单</div>
+    <div class="decision-share" onclick="alert('长按页面截图保存，或分享给微信好友')">
+      <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+    </div>
+  </div>
+  <div id="decision-sheet-content">
+    <div class="decision-sheet">
+      <div class="sheet-section">
+        <div class="sheet-label">品种</div>
+        <div class="sheet-value" id="ds-crop">西瓜</div>
+      </div>
+      <div class="sheet-divider"></div>
+      <div class="sheet-section">
+        <div class="sheet-label">面积 / 预计总产</div>
+        <div class="sheet-value" id="ds-area">10亩 / 预计总产5.0万斤</div>
+      </div>
+      <div class="sheet-divider"></div>
+      <div class="sheet-section">
+        <div class="sheet-label">分货比例</div>
+        <div class="sheet-bar" id="ds-bar">
+          <div class="sheet-bar-seg" style="width:80%;background:#5BAE8A">八成</div>
+          <div class="sheet-bar-seg" style="width:20%;background:#F5A623">二成</div>
+        </div>
+<div class="sheet-legend" id="ds-legend">
+          <span><span style="width:8px;height:8px;border-radius:50%;background:#5BAE8A;display:inline-block"></span> 卖给贩子</span>
+          <span><span style="width:8px;height:8px;border-radius:50%;background:#F5A623;display:inline-block"></span> 自己拉去卖</span>
+        </div>
+      </div>
+      <div class="sheet-divider"></div>
+      <div class="sheet-section">
+        <div class="sheet-label">预计到手</div>
+        <div class="sheet-value gold" id="ds-income">2.8万</div>
+        <div style="font-size:13px;color:#7A8C83;margin-top:4px">比全卖给贩子，多赚 <span id="ds-extra">0.30</span> 万</div>
+      </div>
+      <div class="sheet-divider"></div>
+      <div class="sheet-section">
+        <div class="sheet-label">怎么算的</div>
+<div class="sheet-row">
+          <span class="sheet-row-label">卖给贩子</span>
+          <span class="sheet-row-value" id="ds-dealer">0.33元/斤，当场给钱</span>
+        </div>
+        <div id="ds-self-rows"></div>
+      </div>
+      <div class="sheet-divider"></div>
+      <div class="sheet-section">
+        <div class="sheet-label">什么时候卖</div>
+        <div class="sheet-value" style="font-size:15px;color:#F5A623">现在价格最低，如果等得起，8月下旬再卖可能多赚一点</div>
+      </div>
+    </div>
+    <div class="sheet-footer">本工具基于公开数据测算，不替代农技专家判断</div>
+  </div>
+</div>
+
+<!-- ===== STATE B: Dashboard (Returning User) ===== -->
+<div id="dashboard-state" class="state-container">
+  <div class="page-content" id="dashboard-content">
+    <!-- Page Header with City -->
+    <div class="page-header">
+      <div class="page-header-title">分货宝</div>
+      <div class="page-header-city" id="header-city" onclick="changeCity()">📍 <span id="city-text">正在定位…</span></div>
+    </div>
+
+    <!-- Block 1: Product Visual Card -->
+    <div class="visual-card" id="visual-card">
+      <div class="visual-bg" id="visual-bg" style="background-image:url('default-crop.jpg');background-size:cover;background-position:center;"></div>
+      <div class="visual-overlay"></div>
+      <div class="visual-info">
+        <div class="visual-label">
+          <div class="visual-crop" id="visual-crop">西瓜</div>
+          <div class="visual-meta" id="visual-meta">10亩 | 预计总产5.0万斤</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Block 2: Price Adjuster + Daily Channel Reference Card -->
+    <div class="price-card">
+      <div>
+        <div class="price-label">贩子来收价</div>
+        <div style="font-size:12px;color:#5BAE8A;opacity:0.7;margin-top:2px">调一下，看各渠道能卖多少</div>
+      </div>
+      <div class="price-adjuster">
+        <button class="price-btn" onclick="adjustPrice(-0.05)">−</button>
+        <span class="price-display" id="priceVal">0.50</span><span class="price-unit">元/斤</span>
+        <button class="price-btn" onclick="adjustPrice(0.05)">+</button>
+      </div>
+    </div>
+
+    <div style="background:#fff;border-radius:16px;padding:16px 20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(91,174,138,0.08)">
+      <div style="font-size:15px;font-weight:600;color:#5BAE8A;margin-bottom:10px">今日各渠道参考价</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:14px;color:#1F2D28">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span>贩子来收</span>
+          <span style="font-weight:600;color:#5BAE8A"><span id="ref-dealer">0.50</span> 元/斤 <span style="font-size:12px;color:#7A8C83;font-weight:400">（农民输入的）</span></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span>自己拉去市场</span>
+          <span style="font-weight:600;color:#5BAE8A"><span id="ref-market">0.70</span> 元/斤 <span style="font-size:12px;color:#7A8C83;font-weight:400">（系统推算）</span></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span>路边/集市卖</span>
+          <span style="font-weight:600;color:#5BAE8A"><span id="ref-retail">0.90</span> 元/斤 <span style="font-size:12px;color:#7A8C83;font-weight:400">（系统推算）</span></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span>合作社/加工厂</span>
+          <span style="font-weight:600;color:#5BAE8A"><span id="ref-coop">0.55</span> 元/斤 <span style="font-size:12px;color:#7A8C83;font-weight:400">（系统推算）</span></span>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#7A8C83;margin-top:10px;padding-top:10px;border-top:1px solid #E8F0EB">除贩子价外，其他为系统参考价，实际以当地行情为准。</div>
+    </div>
+
+    <!-- Block 3: AI Advice + Distribution -->
+    <div class="advice-card">
+      <div class="advice-header">
+        <div class="advice-avatar">技</div>
+        <div class="advice-text" id="advice-text">今天有雨，路上损耗可能增加，建议八成卖给贩子，二成自己拉去卖</div>
+      </div>
+      <div class="stacked-bar" id="stacked-bar">
+        <div class="bar-seg a" id="bar-a" style="width:80%">八成</div>
+        <div class="bar-seg b" id="bar-b" style="width:20%">二成</div>
+      </div>
+      <div class="distribution-text">
+        <span><span class="dot a"></span><span id="dist-a">八成 卖给贩子</span></span>
+        <span><span class="dot b"></span><span id="dist-b">二成 自己拉去卖</span></span>
+      </div>
+    </div>
+
+    <!-- Block 4: Income Big Card -->
+    <div class="income-card">
+      <div class="income-label">按这样分，预计到手</div>
+      <div><span class="income-value" id="income-val">2.8</span><span class="income-unit">万</span></div>
+      <div class="income-compare" id="income-compare">比全卖给贩子，多赚 0.30 万</div>
+    </div>
+
+    <!-- Block 5: Channel Cards (flat) -->
+    <div class="channel-panel" id="channel-panel">
+      <div class="channel-header">
+        <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        卖货渠道（勾选启用）
+      </div>
+      <div id="channels-list"></div>
+      <div class="channel-tip">点一下勾选或取消，系统自动重新算</div>
+    </div>
+
+    <!-- Block 6: Buttons -->
+    <div style="padding:8px 16px 16px;text-align:center">
+      <button onclick="startNewCalculation()" style="width:100%;padding:14px 0;border:none;border-radius:12px;background:linear-gradient(135deg,#5BAE8A,#429976);color:#fff;font-size:16px;font-weight:600;box-shadow:0 2px 12px rgba(212,175,55,0.35);cursor:pointer;-webkit-tap-highlight-color:transparent;margin-bottom:10px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        重新算一笔
+      </button>
+      <button onclick="showDecisionSheet()" style="width:100%;padding:14px 0;border:none;border-radius:12px;background:#5BAE8A;color:#fff;font-size:16px;font-weight:600;box-shadow:0 2px 12px rgba(91,174,138,0.08);cursor:pointer;-webkit-tap-highlight-color:transparent">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        生成决策参考单
+      </button>
+    </div>
+
+    <!-- Block 7: Service Grid -->
+    <div class="service-grid">
+      <a class="service-item" href="market.html">
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div class="service-name">今日行情</div>
+      </a>
+<a class="service-item" href="acquisition_points.html">
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div class="service-name">附近收购点</div>
+      </a>
+      <a class="service-item" href="https://baike.baidu.com/search?word=农业种植技术" target="_blank">
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
+        <div class="service-name">农技百科</div>
+      </a>
+      <a class="service-item" href="weather.html">
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24"><path d="M20 16.2A4.5 4.5 0 0 0 3.2 14.2A5.5 5.5 0 0 0 13 18.9"/><path d="M16 18v6"/><path d="M13 21l3-3"/><path d="M19 21l-3-3"/></svg>
+        </div>
+        <div class="service-name">天气预警</div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Searching Overlay (removed: now using local default image) ===== -->
+
+<!-- ===== Tab Bar ===== -->
+<div id="tab-bar">
+  <a class="tab-item active" href="index.html" id="tab-index">
+    <div class="tab-icon-wrap">
+      <svg class="tab-icon" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="11" y2="11"/><line x1="14" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="11" y2="15"/><line x1="14" y1="15" x2="16" y2="15"/></svg>
+    </div>
+    <div class="tab-label">算账</div>
+  </a>
+  <a class="tab-item" href="market.html" id="tab-market">
+    <div class="tab-icon-wrap">
+      <svg class="tab-icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <div class="tab-label">行情</div>
+  </a>
+  <a class="tab-item" href="service.html" id="tab-service">
+    <div class="tab-icon-wrap">
+      <svg class="tab-icon" viewBox="0 0 24 24"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/></svg>
+    </div>
+    <div class="tab-label">服务</div>
+  </a>
+  <a class="tab-item" href="profile.html" id="tab-profile">
+    <div class="tab-icon-wrap">
+      <svg class="tab-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <div class="tab-label">我的</div>
+  </a>
+</div>
+
+</div>
+
+<script>
+var PARAMS={grades:{standard:'统货',premium:'精品',sub:'次货'},cropCategory:{watermelon:'瓜果',apple:'水果',garlic:'根茎',leafy:'叶菜',citrus:'水果',cabbage:'叶菜',corn:'根茎',other:'果蔬通用'},categoryLossRates:{'瓜果':{normal:[.15,.25],cold:[.015,.03]},'水果':{normal:[.10,.20],cold:[.015,.03]},'根茎':{normal:[.05,.10],cold:[.005,.015]},'叶菜':{normal:[.20,.30],cold:[.03,.05]},'果蔬通用':{normal:[.15,.25],cold:[.015,.03]}},transportRatePerTonKm:[.5,.8],defaultDistance:100,marketFees:{'北京新发地':{entry:40,entryPerTon:40,booth:[100,500]},'蚌埠海吉星':{entry:30,entryPerTon:30,booth:[600,800]},'济南堤口':{entry:0,entryPerTon:0,booth:[0,0],feeRate:.03}},categoryMultiplier:{'瓜果':2.5,'水果':3,'根茎':2.2,'叶菜':2.8,'果蔬通用':2.5},roadsideRetailMultiplier:{'瓜果':4,'水果':5,'根茎':3,'叶菜':4.5,'果蔬通用':4},groupBuyMultiplier:{'瓜果':3.5,'水果':4.5,'根茎':3,'叶菜':3.8,'果蔬通用':3.5},gradeMultiplier:{standard:[.9,1.1],premium:[1.1,1.3],sub:[.6,.8]},shortTransportCost:[50,100],roadsideLossRate:[.08,.12],groupBuyPackagingCost:[.05,.10],groupBuyLossRate:[.05,.10],coldTransportMultiplier:1.5,longDistanceThreshold:300};
+
+var CROP_LABELS={watermelon:'西瓜',apple:'苹果',garlic:'大蒜',leafy:'叶菜',citrus:'柑橘',cabbage:'白菜',corn:'玉米',other:'其他'};
+
+// 渠道价格系数（参考行业均值估算，非实时行情数据）
+// 市场系数 1.40：批发市场价通常比地头收购价高 30%-50%，
+//                扣除运费、损耗、摊位费后净赚 20%-30%
+// 零售系数 1.80：零售价比地头价高 70%-100%，但量小、耗人力、有损耗
+// 合作社系数 1.10：合作社统一收购价略高于贩子，但要求量大、品相统一
+// 数据参考：农业农村部市场监测、惠农网行情、田野调研
+var DEFAULT_COEF = { market: 1.40, retail: 1.80, coop: 1.10 };
+// 品种系数：不同品种的渠道价差略有不同，供按品种参考调整
+// 西瓜：market 1.30，retail 1.70，coop 1.10（瓜类量大、市场差价小）
+// 苹果：market 1.40，retail 1.80，coop 1.20（耐储存、合作社议价能力强）
+// 柑橘：market 1.35，retail 1.75，coop 1.10（秋冬水果走量快）
+// 其他品种：用默认系数 DEFAULT_COEF
+var CROP_COEF = {
+  watermelon: { market: 1.30, retail: 1.70, coop: 1.10 },
+  apple:      { market: 1.40, retail: 1.80, coop: 1.20 },
+  citrus:     { market: 1.35, retail: 1.75, coop: 1.10 }
+};
+
+// 获取当前生效的渠道系数：农户在“我的”页自定义的优先，否则用默认行业均值
+function getChannelCoef(){
+  var custom=null;
+  try{custom=JSON.parse(localStorage.getItem('fenhuobao_channel_coefs')||'null');}catch(e){custom=null;}
+  if(custom&&custom.market&&custom.retail&&custom.coop){
+    return {market:parseFloat(custom.market),retail:parseFloat(custom.retail),coop:parseFloat(custom.coop)};
+  }
+  return {market:DEFAULT_COEF.market,retail:DEFAULT_COEF.retail,coop:DEFAULT_COEF.coop};
+}
+
+// 更新“今日各渠道参考价”卡片，并同步调价器显示
+function updateChannelRefCard(price){
+  var coef=getChannelCoef();
+  function set(id,v){var el=document.getElementById(id);if(el)el.textContent=v.toFixed(2);}
+  set('priceVal',price);
+  set('ref-dealer',price);
+  set('ref-market',price*coef.market);
+  set('ref-retail',price*coef.retail);
+  set('ref-coop',price*coef.coop);
+}
+
+// 调价器：按步长调整贩子来收价（不低于 0.01），每次调价自动记录到 priceHistory
+function adjustPrice(delta){
+  var priceEl=document.getElementById('priceVal');
+  var cur=parseFloat(priceEl?priceEl.textContent:0)||0.5;
+  var next=Math.max(0.01,Math.round((cur+delta)*100)/100);
+  updateChannelRefCard(next);
+  recordPriceSnapshot(next);
+  var data=chatData;
+  if(data){
+    data.price=next;
+    try{
+      localStorage.setItem('userData',JSON.stringify(data));
+      localStorage.setItem('fenhuobao_data',JSON.stringify(data));
+    }catch(e){}
+    recalcDashboard(next,data);
+  }
+}
+
+// 记录今日价格快照：{日期, 贩子价, 市场价, 零售价, 合作社价} 存入 localStorage 的 priceHistory
+function recordPriceSnapshot(dealerPrice){
+  var coef=getChannelCoef();
+  var today=new Date();
+  function pad(n){return n<10?'0'+n:''+n;}
+  var dateStr=today.getFullYear()+'-'+pad(today.getMonth()+1)+'-'+pad(today.getDate());
+  var arr=[];
+  try{arr=JSON.parse(localStorage.getItem('priceHistory')||'[]');}catch(e){arr=[];}
+  if(!Array.isArray(arr))arr=[];
+  // 同一天覆盖
+  arr=arr.filter(function(rec){return !(rec&&rec.date===dateStr);});
+  arr.push({
+    date:dateStr,
+    dealer:Math.round(dealerPrice*100)/100,
+    market:Math.round(dealerPrice*coef.market*100)/100,
+    retail:Math.round(dealerPrice*coef.retail*100)/100,
+    coop:Math.round(dealerPrice*coef.coop*100)/100
+  });
+  arr.sort(function(a,b){return a.date.localeCompare(b.date);});
+  if(arr.length>30) arr=arr.slice(-30);
+  localStorage.setItem('priceHistory',JSON.stringify(arr));
+  // 同步写入旧格式（兼容行情页的历史读取）
+  recordPriceHistory(dealerPrice,'dealer');
+  recordPriceHistory(dealerPrice*coef.market,'market');
+  recordPriceHistory(dealerPrice*coef.retail,'retail');
+  recordPriceHistory(dealerPrice*coef.coop,'factory');
+}
+
+var VARIETY_MAP={
+  apple:['红富士','嘎啦','花牛'],
+  citrus:['砂糖橘','沃柑','脐橙'],
+  watermelon:['8424','麒麟瓜','甜王'],
+  cabbage:[],
+  leafy:[],
+  garlic:[],
+  corn:[],
+  other:[]
+};
+
+var CROP_GRADIENT={
+  watermelon:'linear-gradient(135deg,#5BAE8A,#5BAE8A)',apple:'linear-gradient(135deg,#C73E3E,#8B0000)',
+  garlic:'linear-gradient(135deg,#F5F0E0,#D4C4A0)',citrus:'linear-gradient(135deg,#A8D5BA,#F5A623)',
+  cabbage:'linear-gradient(135deg,#A8D5BA,#5BAE8A)',leafy:'linear-gradient(135deg,#81C784,#5BAE8A)',
+  corn:'linear-gradient(135deg,#FFD700,#F5A623)',other:'linear-gradient(135deg,#5BAE8A,#5BAE8A)'
+};
+
+// ===== STATE MACHINE =====
+// S0: greeting
+// S1: ask base crop
+// S2: ask variety (dynamic based on S1 answer; skipped for cabbage/leafy/garlic/corn/other)
+// S3: ask area
+// S4: ask yield per mu
+// S5: ask dealer price
+// S6: complete + redirect
+var STATE={S0_GREET:0,S1_BASE_CROP:1,S2_VARIETY:2,S3_AREA:3,S4_YIELD:4,S5_PRICE:5,S6_COMPLETE:6};
+var currentState=STATE.S0_GREET;
+var chatData={};
+var pendingManualState=null;
+
+function init(){
+  // 价格提醒检查
+  checkPriceAlert();
+  
+  var data=localStorage.getItem('userData');
+  if(data){
+    try{
+      var d=JSON.parse(data);
+      if(d.crop&&d.area&&d.yieldPerMu&&d.price){
+        showDashboard(d);
+        return;
+      }
+    }catch(e){}
+  }
+  showChat();
+  enterState(STATE.S0_GREET);
+}
+
+// 价格提醒检查：App打开时自动比对当前价与目标价
+function checkPriceAlert(){
+  try{
+    var alertMeta = localStorage.getItem('fenhuobao_alert_meta');
+    if(!alertMeta) return;
+    var meta = JSON.parse(alertMeta);
+    if(!meta || !meta.active || !meta.targetPrice || !meta.crop) return;
+    
+    // 获取当前价格（从userData或默认）
+    var currentPrice = meta.currentPrice || 0;
+    var userData = localStorage.getItem('fenhuobao_data') || localStorage.getItem('userData');
+    if(userData){
+      try{ var ud = JSON.parse(userData); if(ud.price) currentPrice = parseFloat(ud.price); }catch(e){}
+    }
+    
+    var targetPrice = parseFloat(meta.targetPrice);
+    if(currentPrice >= targetPrice){
+      // 达标提醒（延迟显示，等页面加载完）
+      setTimeout(function(){
+        alert('老乡，' + meta.crop + '价格已涨到' + currentPrice.toFixed(2) + '元/斤，达到你设置的' + targetPrice.toFixed(2) + '元目标，建议尽快出手！');
+      }, 1500);
+    }
+  }catch(e){ console.log('价格提醒检查出错', e); }
+}
+
+function showChat(){
+  document.getElementById('chat-state').classList.add('active');
+  document.getElementById('dashboard-state').classList.remove('active');
+  document.getElementById('decision-state').classList.remove('active');
+  document.getElementById('tab-bar').style.display='flex';
+}
+
+function showDashboard(data){
+  document.getElementById('chat-state').classList.remove('active');
+  document.getElementById('dashboard-state').classList.add('active');
+  document.getElementById('decision-state').classList.remove('active');
+  document.getElementById('tab-bar').style.display='flex';
+  renderDashboard(data);
+  loadSavedCity();
+  updateCity();
+}
+
+// 城市定位相关（百度 IP 定位 + 手动切换）
+function updateCity(){
+  var cityEl=document.getElementById('city-text');
+  if(!cityEl) return;
+
+  window._ipCallback=function(data){
+    var city=(data&&data.content&&data.content.address_detail&&data.content.address_detail.city)||'';
+    if(!city) city='开封市';
+    cityEl.textContent=city;
+    localStorage.setItem('userCity', city);
+  };
+
+  var saved=localStorage.getItem('userCity');
+  if(saved){cityEl.textContent=saved;return;}
+
+  var script=document.createElement('script');
+  script.src='https://api.map.baidu.com/location/ip?ak=YOUR_BMAP_AK&coor=bd09ll&callback=_ipCallback';
+  script.onerror=function(){cityEl.textContent='开封市';};
+  document.head.appendChild(script);
+}
+
+function changeCity(){
+  var newCity=prompt('请输入城市名称（例如：延安市）：', localStorage.getItem('userCity')||'开封市');
+  if(newCity&&newCity.trim()){
+    newCity=newCity.trim();
+    localStorage.setItem('userCity', newCity);
+    document.getElementById('city-text').textContent=newCity;
+    alert('城市已切换为：'+newCity+'\n附近收购点页面将同步更新');
+  }
+}
+
+// 读取上次保存的城市
+function loadSavedCity(){
+  var saved=localStorage.getItem('userCity');
+  if(saved){
+    var cityEl=document.getElementById('city-text');
+    if(cityEl) cityEl.textContent=saved;
+  }
+}
+
+var chatMessages=document.getElementById('chat-messages');
+var chatInput=document.getElementById('chat-input');
+var sendBtn=document.getElementById('send-btn');
+
+function scrollChatToBottom(){
+  setTimeout(function(){
+    var cm=document.getElementById('chat-messages');
+    if(cm) cm.scrollTop=cm.scrollHeight;
+  },50);
+  setTimeout(function(){
+    var cm=document.getElementById('chat-messages');
+    if(cm) cm.scrollTop=cm.scrollHeight;
+  },180);
+}
+
+function addAIMessage(text){
+  var div=document.createElement('div');
+  div.className='message ai';
+  div.innerHTML='<div class="msg-avatar">技</div><div class="msg-bubble">'+text+'</div>';
+  chatMessages.appendChild(div);
+  scrollChatToBottom();
+}
+
+function addUserMessage(text){
+  var div=document.createElement('div');
+  div.className='message user';
+  div.innerHTML='<div class="msg-bubble">'+text+'</div>';
+  chatMessages.appendChild(div);
+  scrollChatToBottom();
+}
+
+function addQuickButtons(buttons){
+  var container=document.createElement('div');
+  container.className='quick-replies';
+  for(var i=0;i<buttons.length;i++){
+    var btn=document.createElement('button');
+    btn.className='quick-btn'+(buttons[i].manual?' manual':'');
+    btn.textContent=buttons[i].label;
+    btn.onclick=(function(b){return function(){handleQuickReply(b.value,b.label,b.manual)}})(buttons[i]);
+    container.appendChild(btn);
+  }
+  chatMessages.appendChild(container);
+  scrollChatToBottom();
+}
+
+function enterState(state){
+  currentState=state;
+  pendingManualState=null;
+  if(state===STATE.S0_GREET){
+    addAIMessage('老乡好！我是分货宝，专门帮你算清楚卖菜卖果怎么卖最划算。咱们开始吧！');
+    setTimeout(function(){enterState(STATE.S1_BASE_CROP);},400);
+  }else if(state===STATE.S1_BASE_CROP){
+    addAIMessage('老乡，你这季种的是什么？');
+    showBaseCropOptions();
+  }else if(state===STATE.S2_VARIETY){
+    addAIMessage('种的是哪个品种啊？');
+    showVarietyOptions(chatData.baseCrop);
+  }else if(state===STATE.S3_AREA){
+    addAIMessage('种了多少亩啊？');
+    showAreaOptions();
+  }else if(state===STATE.S4_YIELD){
+    addAIMessage('一亩地大概能收多少斤？');
+    showYieldOptions();
+  }else if(state===STATE.S5_PRICE){
+    addAIMessage('贩子现在给你多少钱一斤？');
+    showPriceOptions();
+  }else if(state===STATE.S6_COMPLETE){
+    completeChat();
+  }
+}
+
+function showBaseCropOptions(){
+  addQuickButtons([
+    {label:'苹果',value:'apple'},
+    {label:'柑橘',value:'citrus'},
+    {label:'西瓜',value:'watermelon'},
+    {label:'白菜',value:'cabbage'},
+    {label:'其他（手动输入）',value:'other',manual:true}
+  ]);
+}
+
+function showVarietyOptions(baseCrop){
+  var varieties=VARIETY_MAP[baseCrop]||[];
+  var buttons=[];
+  for(var i=0;i<varieties.length;i++){
+    buttons.push({label:varieties[i],value:varieties[i]});
+  }
+  buttons.push({label:'其他（手动输入）',value:'other',manual:true});
+  addQuickButtons(buttons);
+}
+
+function showAreaOptions(){
+  addQuickButtons([
+    {label:'5亩',value:'5'},
+    {label:'10亩',value:'10'},
+    {label:'20亩',value:'20'},
+    {label:'50亩',value:'50'},
+    {label:'其他（手动输入）',value:'other',manual:true}
+  ]);
+}
+
+function showYieldOptions(){
+  addQuickButtons([
+    {label:'3000斤',value:'3000'},
+    {label:'5000斤',value:'5000'},
+    {label:'8000斤',value:'8000'},
+    {label:'其他（手动输入）',value:'other',manual:true}
+  ]);
+}
+
+function showPriceOptions(){
+  addQuickButtons([
+    {label:'0.3元',value:'0.3'},
+    {label:'0.5元',value:'0.5'},
+    {label:'1.0元',value:'1.0'},
+    {label:'其他（手动输入）',value:'other',manual:true}
+  ]);
+}
+
+function handleQuickReply(value,label,isManual){
+  if(isManual){
+    pendingManualState=currentState;
+    chatInput.focus();
+    chatInput.setAttribute('placeholder','请手动输入...');
+    if(currentState===STATE.S3_AREA||currentState===STATE.S4_YIELD||currentState===STATE.S5_PRICE){
+      chatInput.setAttribute('inputmode','numeric');
+    }else{
+      chatInput.removeAttribute('inputmode');
+    }
+    return;
+  }
+  processInput(label||value,value);
+}
+
+function processInput(displayText,dataValue){
+  if(!displayText.trim()) return;
+  addUserMessage(displayText);
+  var text=dataValue||displayText;
+  text=text.replace(/，/g,'.').replace(/。/g,'');
+
+  if(currentState===STATE.S1_BASE_CROP){
+    var matchedKey=null;
+    for(var k in CROP_LABELS){if(CROP_LABELS[k]===text||k===text){matchedKey=k;break}}
+    chatData.baseCrop=matchedKey||text;
+    chatData.crop=matchedKey||text;
+    chatData.cropLabel=CROP_LABELS[matchedKey]||text;
+    var varieties=VARIETY_MAP[chatData.baseCrop]||[];
+    if(varieties.length>0){
+      enterState(STATE.S2_VARIETY);
+    }else{
+      chatData.variety='';
+      enterState(STATE.S3_AREA);
+    }
+  }else if(currentState===STATE.S2_VARIETY){
+    chatData.variety=text;
+    enterState(STATE.S3_AREA);
+  }else if(currentState===STATE.S3_AREA){
+    chatData.area=parseFloat(text)||10;
+    enterState(STATE.S4_YIELD);
+  }else if(currentState===STATE.S4_YIELD){
+    chatData.yieldPerMu=parseFloat(text)||5000;
+    enterState(STATE.S5_PRICE);
+  }else if(currentState===STATE.S5_PRICE){
+    chatData.price=parseFloat(text)||0.5;
+    chatData.timestamp=Date.now();
+    enterState(STATE.S6_COMPLETE);
+  }
+}
+
+sendBtn.addEventListener('click',function(){
+  var text=chatInput.value.trim();
+  if(text){
+    chatInput.value='';
+    if(pendingManualState!==null){
+      currentState=pendingManualState;
+      pendingManualState=null;
+    }
+    processInput(text);
+  }
+});
+
+chatInput.addEventListener('keydown',function(e){
+  if(e.key==='Enter'){
+    var text=chatInput.value.trim();
+    if(text){
+      chatInput.value='';
+      if(pendingManualState!==null){
+        currentState=pendingManualState;
+        pendingManualState=null;
+      }
+      processInput(text);
+    }
+  }
+});
+
+// 全部使用本地默认图，彻底废弃动态搜图
+function completeChat(){
+  addAIMessage('好嘞，我帮你算算！');
+  chatInput.disabled=true;
+  sendBtn.disabled=true;
+
+  setTimeout(function(){
+    addAIMessage('算好了！你看看这样分怎么样。');
+    chatData.imageUrl='default-crop.jpg';
+    chatData.income=calcTotalIncome(chatData);
+    chatData.hasCar=chatData.hasCar||false;
+    chatData.workers=chatData.workers||1;
+    localStorage.setItem('userData',JSON.stringify(chatData));
+    localStorage.setItem('fenhuobao_data',JSON.stringify(chatData));
+    saveToHistory(chatData);
+    showDashboard(chatData);
+  }, 200);
+}
+
+// 记录价格历史（同一天同类型覆盖，保留最近30天）
+function recordPriceHistory(price,type){
+  if(!type) type='dealer';
+  var today=new Date();
+  function pad(n){return n<10?'0'+n:''+n;}
+  var dateStr=today.getFullYear()+'-'+pad(today.getMonth()+1)+'-'+pad(today.getDate());
+  var arr=[];
+  try{arr=JSON.parse(localStorage.getItem('fenhuobao_price_history')||'[]');}catch(e){arr=[];}
+  if(!Array.isArray(arr))arr=[];
+  // 同一天同类型覆盖
+  arr=arr.filter(function(rec){return !(rec && rec.date===dateStr && rec.type===type);});
+  arr.push({date:dateStr,type:type,price:Math.round(price*100)/100});
+  arr.sort(function(a,b){return a.date.localeCompare(b.date);});
+  var dates=[];
+  arr.forEach(function(rec){if(dates.indexOf(rec.date)<0)dates.push(rec.date);});
+  if(dates.length>30){
+    var cutoff=dates[dates.length-30];
+    arr=arr.filter(function(rec){return rec.date>=cutoff;});
+  }
+  localStorage.setItem('fenhuobao_price_history',JSON.stringify(arr));
+}
+
+function saveToHistory(data){
+  var raw=localStorage.getItem('fenhuobao_history');
+  var records=[];
+  if(raw){try{records=JSON.parse(raw)}catch(e){records=[]}}
+  var ts=data.timestamp||Date.now();
+  var totalIncome=(data.income)||calcTotalIncome(data);
+  var allDealer=(data.area||0)*(data.yieldPerMu||0)*0.5*(data.price||0);
+  var snapshot={
+    crop:data.crop,cropLabel:data.cropLabel,variety:data.variety||'',area:data.area,yieldPerMu:data.yieldPerMu,
+    price:data.price,timestamp:ts,income:totalIncome,extra:totalIncome-allDealer,
+    activeChannels:data.activeChannels||getDefaultPcts(data),
+    hasCar:data.hasCar||false,hasColdStorage:data.hasColdStorage||false,workers:data.workers||1,
+    location:data.location||'',market:data.market||'',days:data.days||1
+  };
+  var idx=-1;
+  for(var i=0;i<records.length;i++){if(records[i].timestamp===ts){idx=i;break;}}
+  if(idx>=0) records[idx]=snapshot; else records.push(snapshot);
+  if(records.length>30) records=records.slice(-30);
+  localStorage.setItem('fenhuobao_history',JSON.stringify(records));
+}
+
+function renderDashboard(data){
+  var visualCrop=document.getElementById('visual-crop');
+  var visualMeta=document.getElementById('visual-meta');
+  var visualBg=document.getElementById('visual-bg');
+  var displayLabel=data.cropLabel||CROP_LABELS[data.crop]||data.crop||'西瓜';
+  if(data.variety) displayLabel=displayLabel+'（'+data.variety+'）';
+  visualCrop.textContent=displayLabel;
+  var totalYield=(parseFloat(data.area)||10)*(parseFloat(data.yieldPerMu)||5000);
+  var totalWan=(totalYield/10000).toFixed(1);
+  visualMeta.textContent=(data.area||10)+'亩 | 预计总产'+totalWan+'万斤';
+  var cropKey=data.crop||'other';
+  if(!CROP_GRADIENT[cropKey]){for(var k in CROP_LABELS){if(CROP_LABELS[k]===data.crop){cropKey=k;break}}}
+  data.crop=cropKey;
+  var gradient=CROP_GRADIENT[cropKey]||CROP_GRADIENT.other;
+  // 统一使用本地默认实拍图，所有品种保持一致
+  visualBg.style.backgroundImage='url(default-crop.jpg)';
+  visualBg.style.backgroundSize='cover';
+  visualBg.style.backgroundPosition='center';
+  var currentPrice=parseFloat(data.price)||0.5;
+  // 初始化调价器与今日各渠道参考价卡片（按当前贩子价刷新）
+  updateChannelRefCard(currentPrice);
+  recalcDashboard(currentPrice,data);
+}
+
+var ALL_CHANNELS=[
+  {id:'dealer',name:'卖给贩子',priceFactor:1,lossRate:0,costPerKg:0,settlement:'当场给钱',desc:'省心省力，当场拿钱',color:'#5BAE8A'},
+  {id:'market',name:'自己拉去市场卖',priceFactor:2.5,lossRate:0.15,costPerKg:0.04,settlement:'卖完了才给钱',desc:'单价高但扣运费和摊位费',color:'#F5A623'},
+  {id:'factory',name:'加工厂/合作社',priceFactor:1.3,lossRate:0.05,costPerKg:0,settlement:'分批给钱',desc:'统一收购、价格稳定，适合量大',color:'#A8D5BA'},
+  {id:'store',name:'专卖店',priceFactor:3.0,lossRate:0.10,costPerKg:0.02,settlement:'当场给钱',desc:'精品走高端，要求品质好',color:'#7A8C83'},
+  {id:'community',name:'卖给小区团购/熟人',priceFactor:2.8,lossRate:0.08,costPerKg:0.01,settlement:'提前找人买',desc:'单价高但需要提前找人买',color:'#A8D5BA'},
+  {id:'roadside',name:'在路边/集市摆摊',priceFactor:3.5,lossRate:0.10,costPerKg:0.006,settlement:'当场给钱',desc:'自己守摊卖，费时费力',color:'#5BAE8A'}
+];
+
+function getDefaultPcts(data){
+  var hasCar=!!data.hasCar,hasCold=!!data.hasColdStorage,workers=parseInt(data.workers)||1;
+  var p={dealer:0,market:0,factory:0,store:0,community:0,roadside:0};
+  if(!hasCar&&!hasCold&&workers<=1){p.dealer=0.8;p.market=0.2;}
+  else if(hasCar&&!hasCold&&workers>=2){p.dealer=0.4;p.market=0.4;p.roadside=0.2;}
+  else if(hasCar&&hasCold&&workers>=2){p.dealer=0.3;p.market=0.3;p.community=0.2;p.roadside=0.2;}
+  else if(!hasCar&&workers>=2){p.dealer=0.5;p.market=0.3;p.community=0.2;}
+  else{p.dealer=0.6;p.market=0.25;p.roadside=0.15;}
+  return p;
+}
+
+function recalcDashboard(price,data){
+  var area=parseFloat(data.area)||10;
+  var yieldPerMu=parseFloat(data.yieldPerMu)||5000;
+  var totalWeight=area*yieldPerMu;
+  var totalKg=totalWeight*0.5;
+  var cat=PARAMS.cropCategory[data.crop]||'果蔬通用';
+  var lossRate=PARAMS.categoryLossRates[cat]||PARAMS.categoryLossRates['果蔬通用'];
+  var normalLoss=(lossRate.normal[0]+lossRate.normal[1])/2;
+
+  // Ensure activeChannels exists
+  if(!data.activeChannels) data.activeChannels=getDefaultPcts(data);
+  var pcts=data.activeChannels;
+
+  // Calculate per-channel income
+  var chanIncomes={};
+  for(var i=0;i<ALL_CHANNELS.length;i++){
+    var c=ALL_CHANNELS[i];
+    var chanPrice=price*c.priceFactor;
+    var chanLoss=c.lossRate||normalLoss;
+    var chanCost=c.costPerKg*totalKg;
+    var income=totalKg*chanPrice*(1-chanLoss)-chanCost;
+    if(c.id==='dealer') income=totalKg*price; // dealer: no loss, no cost
+    chanIncomes[c.id]=income;
+  }
+
+  // Compute weighted total
+  var totalIncome=0;
+  for(var k in pcts){if(pcts[k]>0) totalIncome+=pcts[k]*chanIncomes[k];}
+  var allDealerIncome=chanIncomes['dealer'];
+  var extra=totalIncome-allDealerIncome;
+
+  // Update big income card
+  var incomeVal=document.getElementById('income-val');
+  var incomeCompare=document.getElementById('income-compare');
+  var totalWan=(totalIncome/10000).toFixed(1);
+  var extraWan=(Math.abs(extra)/10000).toFixed(2);
+  incomeVal.textContent=totalWan;
+  if(extra>0){
+    incomeCompare.textContent='比全卖给贩子，多赚 '+extraWan+' 万';
+  }else{
+    incomeCompare.textContent='比全卖给贩子，少赚 '+extraWan+' 万';
+  }
+
+  // Update advice + stacked bar (max 4 visible segments for readability)
+  var adviceText=document.getElementById('advice-text');
+  var barWrap=document.getElementById('stacked-bar');
+  var distWrap=document.querySelector('.distribution-text');
+  var active=[];
+  for(var j=0;j<ALL_CHANNELS.length;j++){
+    var cid=ALL_CHANNELS[j].id;
+    if((pcts[cid]||0)>0) active.push({id:cid,name:ALL_CHANNELS[j].name,pct:pcts[cid],color:ALL_CHANNELS[j].color,income:chanIncomes[cid]});
+  }
+  active.sort(function(a,b){return b.pct-a.pct});
+
+  // Build bar HTML
+  var barHtml='';
+  var distHtml='';
+  var adviceParts=[];
+  for(var idx=0;idx<active.length&&idx<4;idx++){
+    var a=active[idx];
+    var w=Math.round(a.pct*100);
+    barHtml+='<div class="bar-seg" style="width:'+w+'%;background:'+a.color+'">'+pctToText(a.pct)+'</div>';
+    distHtml+='<span><span class="dot" style="background:'+a.color+'"></span><span>'+pctToText(a.pct)+' '+a.name+'</span></span>';
+    if(idx<2) adviceParts.push(pctToText(a.pct)+a.name);
+  }
+  barWrap.innerHTML=barHtml;
+  distWrap.innerHTML=distHtml;
+  if(adviceParts.length>=2){
+    adviceText.textContent='今天天气还行，建议'+adviceParts.join('，')+'。';
+  }else if(adviceParts.length===1){
+    adviceText.textContent='今天天气还行，建议'+adviceParts[0]+'。';
+  }
+
+  // Update alternative plan cards (legacy, keep for compatibility)
+  var altAllVal=document.getElementById('alt-all-val');
+  var altSplitVal=document.getElementById('alt-split-val');
+  if(altAllVal) altAllVal.textContent=(allDealerIncome/10000).toFixed(1)+'万';
+  if(altSplitVal) altSplitVal.textContent=totalWan+'万';
+
+  // Render channel cards
+  renderChannels(pcts,chanIncomes,price);
+
+  // Save
+  data.income=totalIncome;
+  localStorage.setItem('userData',JSON.stringify(data));
+  localStorage.setItem('fenhuobao_data',JSON.stringify(data));
+}
+
+function pctToText(pct){
+  var v=Math.round(pct*10);
+  if(v===10) return '十成';
+  if(v===5) return '五成';
+  if(v===0) return '';
+  if(v>=5) return v+'成';
+  if(v===2) return '两成';
+  if(v===3) return '三成';
+  if(v===4) return '四成';
+  return v+'成';
+}
+
+function renderChannels(pcts,incomes,price){
+  var wrap=document.getElementById('channels-list');
+  if(!wrap) return;
+  var html='';
+  for(var i=0;i<ALL_CHANNELS.length;i++){
+    var c=ALL_CHANNELS[i];
+    var active=(pcts[c.id]||0)>0;
+    var pct=pcts[c.id]||0;
+    var income=incomes[c.id]||0;
+    var unitPrice=(price*c.priceFactor).toFixed(2);
+    html+='<div class="channel-card '+(active?'active':'disabled')+'" onclick="toggleChannel(&quot;'+c.id+'&quot;)">';
+    html+='<div class="channel-check">';
+    html+='<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+    html+='</div>';
+    html+='<div class="channel-info">';
+    html+='<div class="channel-name">'+c.name+'</div>';
+    html+='<div class="channel-meta">'+unitPrice+'元/斤 · '+c.settlement+' · '+c.desc+'</div>';
+    html+='</div>';
+    html+='<div class="channel-income">'+(active?(pctToText(pct)+' · '):'')+((income*pct)/10000).toFixed(1)+'万</div>';
+    html+='</div>';
+  }
+  wrap.innerHTML=html;
+}
+
+function toggleChannel(cid){
+  var data=chatData;
+  if(!data.activeChannels) data.activeChannels=getDefaultPcts(data);
+  var pcts=data.activeChannels;
+  var wasActive=(pcts[cid]||0)>0;
+  if(wasActive){
+    // Disable: set to 0, redistribute among remaining active
+    var removed=pcts[cid];
+    pcts[cid]=0;
+    var activeIds=[];
+    for(var k in pcts){if(pcts[k]>0) activeIds.push(k);}
+    if(activeIds.length===0){pcts['dealer']=1;} // fallback: all dealer
+    else{
+      var sum=0;
+      for(var j=0;j<activeIds.length;j++) sum+=pcts[activeIds[j]];
+      if(sum>0){
+        for(var m=0;m<activeIds.length;m++) pcts[activeIds[m]]=pcts[activeIds[m]]/sum;
+      }else{
+        // equal split
+        var eq=1/activeIds.length;
+        for(var n=0;n<activeIds.length;n++) pcts[activeIds[n]]=eq;
+      }
+    }
+  }else{
+    // Enable: add with a default share, reduce others proportionally
+    var defaults=getDefaultPcts(data);
+    var add=defaults[cid]||0.1;
+    if(add===0) add=0.1;
+    var scale=(1-add);
+    for(var k2 in pcts){pcts[k2]=pcts[k2]*scale;}
+    pcts[cid]=add;
+  }
+  var priceEl=document.getElementById('priceVal');
+  var price=priceEl ? parseFloat(priceEl.textContent)||0.5 : 0.5;
+  recalcDashboard(price,data);
+}
+
+function calcFarmerIncome(data){
+  var area=parseFloat(data.area)||0;
+  var yieldPerMu=parseFloat(data.yieldPerMu)||0;
+  var price=parseFloat(data.price)||0;
+  var totalKg=area*yieldPerMu*0.5;
+  return totalKg*price;
+}
+function calcTotalIncome(data){
+  var area=parseFloat(data.area)||10;
+  var yieldPerMu=parseFloat(data.yieldPerMu)||5000;
+  var totalKg=area*yieldPerMu*0.5;
+  var price=parseFloat(data.price)||0.5;
+  var cat=PARAMS.cropCategory[data.crop]||'果蔬通用';
+  var lossRate=PARAMS.categoryLossRates[cat]||PARAMS.categoryLossRates['果蔬通用'];
+  var normalLoss=(lossRate.normal[0]+lossRate.normal[1])/2;
+  var pcts=data.activeChannels||getDefaultPcts(data);
+  var totalIncome=0;
+  for(var i=0;i<ALL_CHANNELS.length;i++){
+    var c=ALL_CHANNELS[i];
+    var pct=pcts[c.id]||0;
+    if(pct<=0) continue;
+    var chanPrice=price*c.priceFactor;
+    var chanLoss=c.lossRate||normalLoss;
+    var chanCost=c.costPerKg*totalKg;
+    var income=totalKg*chanPrice*(1-chanLoss)-chanCost;
+    if(c.id==='dealer') income=totalKg*price;
+    totalIncome+=pct*income;
+  }
+  return totalIncome;
+}
+
+var urlParams=new URLSearchParams(window.location.search);
+function toggleChannels(){
+  var content=document.getElementById('channels-content');
+  var chevron=document.getElementById('channels-chevron');
+  if(!content) return;
+  if(content.style.maxHeight && content.style.maxHeight!=='0px'){
+    content.style.maxHeight='0px';
+    if(chevron) chevron.style.transform='rotate(0deg)';
+  }else{
+    content.style.maxHeight=content.scrollHeight+'px';
+    if(chevron) chevron.style.transform='rotate(180deg)';
+  }
+}
+function showDecisionSheet(){
+  var data=localStorage.getItem('fenhuobao_data')||localStorage.getItem('userData');
+  if(!data) return;
+  try{
+    var d=JSON.parse(data);
+    saveToHistory(d);
+    d.income=d.income||calcTotalIncome(d);
+    var cropLabel=CROP_LABELS[d.crop]||d.crop||'未知';
+    if(d.variety) cropLabel=cropLabel+'（'+d.variety+'）';
+    document.getElementById('ds-crop').textContent=cropLabel;
+    document.getElementById('ds-area').textContent=(d.area||0)+'亩 / 预计总产'+(d.area*(d.yieldPerMu||0)/10000).toFixed(1)+'万斤';
+    document.getElementById('ds-income').textContent=((d.income||0)/10000).toFixed(1)+'万';
+    var extra=(((d.income||0)-((d.area||0)*(d.yieldPerMu||0)*0.5*(d.price||0)))/10000);
+    document.getElementById('ds-extra').textContent=extra.toFixed(2);
+    var pcts=d.activeChannels||getDefaultPcts(d);
+    var barWrap=document.getElementById('ds-bar');
+    var barHtml='';
+    var active=[];
+    for(var ii=0;ii<ALL_CHANNELS.length;ii++){var c2=ALL_CHANNELS[ii];var pp=pcts[c2.id]||0;if(pp>0) active.push({id:c2.id,name:c2.name,pct:pp,color:c2.color});}
+active.sort(function(a,b){return b.pct-a.pct});
+    for(var jj=0;jj<active.length&&jj<4;jj++){var aa=active[jj];barHtml+='<div class="sheet-bar-seg" style="width:'+Math.round(aa.pct*100)+'%;background:'+aa.color+'">'+pctToText(aa.pct)+' '+aa.name+'</div>';}
+    barWrap.innerHTML=barHtml;
+    var legendHtml='';
+    for(var jj2=0;jj2<active.length&&jj2<4;jj2++){var aa2=active[jj2];legendHtml+='<span><span style="width:8px;height:8px;border-radius:50%;background:'+aa2.color+';display:inline-block"></span> '+aa2.name+'</span>';}
+    document.getElementById('ds-legend').innerHTML=legendHtml;
+    document.getElementById('ds-dealer').textContent=(d.price||0)+'元/斤，当场给钱';
+    var wholesalePrice=((d.price||0)*2.5).toFixed(2);
+var pcts2=d.activeChannels||getDefaultPcts(d);
+    var selfRows=[];
+    for(var kk=0;kk<ALL_CHANNELS.length;kk++){var cc=ALL_CHANNELS[kk];var pp2=pcts2[cc.id]||0;if(pp2>0&&cc.id!=='dealer'){selfRows.push('<div class="sheet-row"><span class="sheet-row-label">'+cc.name+'</span><span class="sheet-row-value">'+((d.price||0)*cc.priceFactor).toFixed(2)+'元/斤，'+cc.settlement+'</span></div>');}}
+    document.getElementById('ds-self-rows').innerHTML=selfRows.length>0?selfRows.join(''):'<div class="sheet-row"><span class="sheet-row-label">其他渠道</span><span class="sheet-row-value">未选择其他渠道</span></div>';
+    document.getElementById('dashboard-state').classList.remove('active');
+    document.getElementById('decision-state').classList.add('active');
+    document.getElementById('tab-bar').style.display='none';
+  }catch(e){}
+}
+function showDashboardFromDecision(){
+  document.getElementById('decision-state').classList.remove('active');
+  document.getElementById('dashboard-state').classList.add('active');
+  document.getElementById('tab-bar').style.display='flex';
+}
+function startNewCalculation(){
+  localStorage.removeItem('userData');
+  localStorage.removeItem('fenhuobao_data');
+  document.getElementById('dashboard-state').classList.remove('active');
+  document.getElementById('decision-state').classList.remove('active');
+  document.getElementById('chat-state').classList.add('active');
+  document.getElementById('tab-bar').style.display='flex';
+  chatMessages.innerHTML='<div id="chat-bottom" style="height:1px;flex-shrink:0"></div>';
+  currentState=STATE.S0_GREET;
+  pendingManualState=null;
+  chatData={};
+  chatInput.disabled=false;
+  sendBtn.disabled=false;
+  enterState(STATE.S0_GREET);
+}
+
+if(urlParams.get('reset')==='1'){localStorage.removeItem('userData');localStorage.removeItem('fenhuobao_data');}
+
+init();
+</script>
+</body>
+</html>
